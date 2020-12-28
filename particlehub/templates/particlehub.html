@@ -17,39 +17,40 @@
 </head>
 
 <body>
-<div class="modal fade" id="settings-modal" tabindex="-1" role="dialog" aria-labelledby="SettingsModal" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 class="modal-title">Settings</h3>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-        <div class="modal-body">
-            <div class="row">
-                <div class="col-sm-12 col-med-6 col-lg-6">
-                    <h5>Particle API Credentials</h5>
-                    <p>API Key</p>
-                    <p>Secret Key</p>
+<div class="modal fade" id="settings-modal" tabindex="-1" role="dialog" aria-labelledby="SettingsModal"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Settings</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12 col-med-6 col-lg-6">
+                        <h5>Particle API Credentials</h5>
+                        <p>API Key</p>
+                        <p>Secret Key</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 col-med-6 col-lg-6">
+                        <h5>Influx DB Credentials</h5>
+                        <p>Host Name</p>
+                        <p>User Name</p>
+                        <p>Password</p>
+                        <p>Database</p>
+                    </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-sm-12 col-med-6 col-lg-6">
-                    <h5>Influx DB Credentials</h5>
-                    <p>Host Name</p>
-                    <p>User Name</p>
-                    <p>Password</p>
-                    <p>Database</p>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
             </div>
         </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
-      </div>
     </div>
-  </div>
 </div>
 
 <div class="container">
@@ -63,7 +64,8 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbar">
-             <button class="btn btn-secondary ml-auto" id="settings-modal-btn" data-toggle="modal" data-target="#settings-modal" type="button"><i class="fas fa-cog"></i></button>
+            <button class="btn btn-secondary ml-auto" id="settings-modal-btn" data-toggle="modal"
+                    data-target="#settings-modal" type="button"><i class="fas fa-cog"></i></button>
         </div>
     </nav>
 
@@ -73,11 +75,30 @@
                 <div class="card-header">
                     Devices
                 </div>
-                Device List Here
+                <ul class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action flex-column align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <div class="mb-1">Name</div>
+                            <div class="mb-2">ID</div>
+                            <div class="mb-3">Device Status</div>
+                            <div class="mb-4">Use</div>
+                            <div class="mb-5">Log Control</div>
+                        </div>
+                    </a>
+                    <a class="list-group-item list-group-item-action flex-column align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <div class="mb-1">Test Device</div>
+                            <div class="mb-2">abc12345</div>
+                            <div class="mb-3"><span class="badge badge-pill badge-success">ON</span></div>
+                            <div class="mb-4"><input type="radio" aria-label="Use Device"></div>
+                            <div class="mb-5"><i class="far fa-play-circle"></i> <i class="fas fa-redo"></i></div>
+                        </div>
+                    </a>
+                </ul>
             </div>
         </div>
     </div>
-    <div class="row justify-content-center">
+    <div class="row sub-row justify-content-center">
         <div class="col-sm-12 col-med-11 col-lg-11">
             <div class="card bg-light">
                 <div class="card-header">
@@ -87,7 +108,7 @@
             </div>
         </div>
     </div>
-    <div class="row justify-content-center">
+    <div class="row sub-row justify-content-center">
         <div class="col-sm-12 col-med-11 col-lg-11">
             <div class="card bg-light">
                 <div class="card-header">
