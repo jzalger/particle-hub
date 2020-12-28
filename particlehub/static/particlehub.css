@@ -1,9 +1,19 @@
 body {
-    background: aliceblue !important;
+    background-color: #495F75 !important;
+    font-family: "Raleway";
+}
+.navbar {
+    font-family: "Quicksand";
 }
 .container {
     padding-bottom:30px;
 }
-.main-row {
+.row {
     padding-top:10px;
+}
+.main-row {
+    margin-top:70px;
+}
+.card {
+    background: #DCD7D5;
 }

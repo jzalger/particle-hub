@@ -7,300 +7,93 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='meathook.css') }}">
-
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300&family=Raleway&display=swap"
+          rel="stylesheet">
     <script src="https://kit.fontawesome.com/04d344c588.js" crossorigin="anonymous"></script>
-    <meta http-equiv="refresh" content="60"/>
-    <title>Meat Hook</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='particlehub.css') }}">
+
+    <title>Particle Hub</title>
 </head>
 
 <body>
-<div class="alert alert-danger" id="general-error-banner" role="alert"></div>
-<div class="alert alert-danger" id="temp-alert-banner" role="alert">
-    <i class="fas fa-thermometer-half"></i> Temperature Alert!
-</div>
-
-<div class="alert alert-danger" id="rh-alert-banner" role="alert">
-    <i class="fas fa-tint"></i> Humidity Alert!
-</div>
-
-<div class="alert alert-warning" id="door-alert-banner" role="alert">
-    <i class="fas fa-door-open"></i> Door Open!
+<div class="modal fade" id="settings-modal" tabindex="-1" role="dialog" aria-labelledby="SettingsModal" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Settings</h3>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+        <div class="modal-body">
+            <div class="row">
+                <div class="col-sm-12 col-med-6 col-lg-6">
+                    <h5>Particle API Credentials</h5>
+                    <p>API Key</p>
+                    <p>Secret Key</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 col-med-6 col-lg-6">
+                    <h5>Influx DB Credentials</h5>
+                    <p>Host Name</p>
+                    <p>User Name</p>
+                    <p>Password</p>
+                    <p>Database</p>
+                </div>
+            </div>
+        </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="container">
-    <div class="row main-row justify-content-center">
-        <h1 class="display-4"><i class="fas fa-utensils"></i> Meat Hook</h1>
-    </div>
-    <div class="row main-row justify-content-center">
-        <div class="col-sm-12 col-lg-8">
-            <div class="card bg-light">
-                <div class="card-header">
-                    Current Status
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-wifi"></i>
+            Particle Hub</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+                aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-                    <span id="cooling-badge" class="badge badge-primary">COOLING</span>
-                    <span id="rh-badge" class="badge badge-success">HUMIDIFYING</span>
-                    <span id="fan-badge" class="badge badge-secondary">FAN ON</span>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <i class="fas fa-thermometer-half"></i> Fridge Temperature
-                        <div class="progress progress-large">
-                            <div id="fridge-temp" class="progress-bar progress-bar-striped bg-primary" role="progressbar" style="width: 25%" aria-valuenow="8"
-                                 aria-valuemin="0" aria-valuemax="20"> ˚C
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <i class="fas fa-tint"></i> Fridge Humidity
-                        <div class="progress progress-large">
-                            <div id="fridge-rh" class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 48%"
-                                 aria-valuenow="48" aria-valuemin="0" aria-valuemax="100"> %
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <i class="fas fa-thermometer-half"></i> External Temperature
-                        <div class="progress progress-large">
-                            <div id="external-temp" class="progress-bar progress-bar-striped bg-warning" role="progressbar" style="width: 75%"
-                                 aria-valuenow="30"
-                                 aria-valuemin="0" aria-valuemax="40"> ˚C
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+        <div class="collapse navbar-collapse" id="navbar">
+             <button class="btn btn-secondary ml-auto" id="settings-modal-btn" data-toggle="modal" data-target="#settings-modal" type="button"><i class="fas fa-cog"></i></button>
         </div>
-    </div>
-    <div class="row main-row justify-content-center">
-        <div class="col-sm-12 col-lg-8">
-            <div class="card bg-light">
-                <div class="card-header">
-                    Live View
-                </div>
-                <img class="card-image-bottom" src="http://192.168.1.52:8080/?action=stream" alt="Live Stream" />
-            </div>
-        </div>
-    </div>
-    <div class="row main-row justify-content-center">
-        <div class="col-sm-12 col-lg-8">
-            <div class="card bg-light">
-                <div class="card-header">
-                    Controls
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-thermometer-half"></i> Automatic Temperature
-                            </div>
-                            <div class="col">
-                                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                    <label id="temp-ctl-on" class="btn btn-outline-success btn-sm ">
-                                        <input id="temp-ctl-on-input" type="radio" name="auto-temp" value="ON" autocomplete="off">ON
-                                    </label>
-                                    <label id="temp-ctl-off" class="btn btn-outline-secondary btn-sm">
-                                        <input id="temp-ctl-off-input" type="radio" name="auto-temp" value="OFF" autocomplete="off">OFF
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row control-sub-row">
-                            <div class="col-6">
-                                <i class="fas fa-tint"></i> Automatic Humidity
-                            </div>
-                            <div class="col">
-                                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                    <label id="rh-ctl-on" class="btn btn-outline-success btn-sm ">
-                                        <input id="rh-ctl-on-input" type="radio" name="auto-rh" value="ON" autocomplete="off" disabled>ON
-                                    </label>
-                                    <label id="rh-ctl-off" class="btn btn-outline-secondary btn-sm">
-                                        <input id="rh-ctl-off-input" type="radio" name="auto-rh" value="OFF" autocomplete="off" disabled>OFF
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-fan"></i> Fan
-                            </div>
-                            <div class="col">
-                                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                    <label id="fan-ctl-on" class="btn btn-outline-success btn-sm">
-                                        <input id="fan-ctl-on-input" type="radio" name="fan-state" value="ON" autocomplete="off" >ON
-                                    </label>
-                                    <label id="fan-ctl-off" class="btn btn-outline-secondary btn-sm">
-                                        <input id="fan-ctl-off-input" type="radio" name="fan-state" value="OFF" autocomplete="off">OFF
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-thermometer-half"></i> Temperature Setpoint
-                            </div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm mb-3">
-                                    <input placeholder="Loading" id="temp-setpoint-input" type="text" class="form-control" aria-label="degrees celcius">
-                                    <div class="input-group-append">
-                                        <span class="input-group-text">˚C</span>
-                                        <button class="btn btn-outline-primary btn-sm" id="temp-setpoint" type="button">Set</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-tint"></i> Humidity Setpoint
-                            </div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm mb-3">
-                                    <input id="rh-setpoint-input" placeholder="Loading" type="text" class="form-control" aria-label="degrees celcius">
-                                    <div class="input-group-append">
-                                        <span class="input-group-text">%</span>
-                                        <button class="btn btn-outline-primary btn-sm" id="rh-setpoint" type="button" disabled>Set</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
+    </nav>
 
     <div class="row main-row justify-content-center">
-        <div class="col-sm-12 col-lg-8">
+        <div class="col-sm-12 col-med-11 col-lg-11">
             <div class="card bg-light">
                 <div class="card-header">
-                    Energy Saving
+                    Devices
                 </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-dollar-sign"></i> Enable
-                            </div>
-                            <div class="col-4">
-                                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                    <label id="energy-saving-on" class="btn btn-outline-success btn-sm">
-                                        <input id="energy-saving-on-input" type="radio" name="fan-state" value="ON" autocomplete="off" >ON
-                                    </label>
-                                    <label id="energy-saving-off" class="btn btn-outline-secondary btn-sm">
-                                        <input id="energy-saving-off-input" type="radio" name="fan-state" value="OFF" autocomplete="off">OFF
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-thermometer-half"></i> Overnight Temperature
-                            </div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm mb-3">
-                                    <input id="overnight-temp-input" placeholder="Loading" type="text"
-                                           class="form-control"
-                                           aria-label="degrees celcius">
-                                    <div class="input-group-append">
-                                        <span class="input-group-text">˚C</span>
-                                        <button class="btn btn-outline-primary btn-sm" id="overnight-temp-btn"
-                                                type="button">
-                                            Set
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
+                Device List Here
             </div>
         </div>
     </div>
-    <div class="row main-row justify-content-center">
-        <div class="col-sm-12 col-lg-8">
+    <div class="row justify-content-center">
+        <div class="col-sm-12 col-med-11 col-lg-11">
             <div class="card bg-light">
                 <div class="card-header">
-                    More Controls
+                    Device Details
                 </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-microchip"></i> Control Algorithm
-                            </div>
-                            <div class="col">
-                                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                    <label id="control-alg-basic" class="btn btn-outline-secondary btn-sm">
-                                        <input id="control-alg-basic-input" value="basic" type="radio" name="ctl-alg" autocomplete="off" > Basic
-                                    </label>
-                                    <label id="control-alg-pid" class="btn btn-outline-secondary btn-sm">
-                                        <input id="control-alg-pid-input" value="pid" type="radio" name="ctl-alg" autocomplete="off"> PID
-                                    </label>
-                                    <label id="control-alg-learn" class="btn btn-outline-secondary btn-sm">
-                                        <input id="control-alg-learn-input" value="learn" type="radio" name="ctl-alg" autocomplete="off"> Learning
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="fas fa-thermometer-empty"></i> Manual Fridge Control
-                            </div>
-                            <div class="col-4">
-                                <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                    <label id="manual-fridge-ctl-on" class="btn btn-outline-success btn-sm ">
-                                        <input id="manual-fridge-ctl-on-input" value="ON" type="radio" name="fridge-state" autocomplete="off"> ON
-                                    </label>
-                                    <label id="manual-fridge-ctl-off" class="btn btn-outline-secondary btn-sm">
-                                        <input id="manual-fridge-ctl-off-input" value="OFF" type="radio" name="fridge-state" autocomplete="off"> OFF
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="far fa-bell"></i> Temperature Alarm Threashold
-                            </div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm mb-3">
-                                    <input id="temp-alarm-delta-input" placeholder="Loading" type="text" class="form-control" aria-label="degrees celcius">
-                                    <div class="input-group-append">
-                                        <span class="input-group-text">˚C</span>
-                                        <button class="btn btn-outline-primary btn-sm" id="temp-alarm-delta-set" type="button">Set</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="list-group-item">
-                        <div class="row">
-                            <div class="col-6">
-                                <i class="far fa-bell"></i> Humidity Alarm Threadshold
-                            </div>
-                            <div class="col-4">
-                                <div class="input-group input-group-sm mb-3">
-                                    <input id="rh-alarm-delta-input" placeholder="Loading" type="text" class="form-control" aria-label="degrees celcius">
-                                    <div class="input-group-append">
-                                        <span class="input-group-text">%</span>
-                                        <button class="btn btn-outline-primary btn-sm" id="rh-alarm-delta-set" type="button">Set</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
+                Device Details Here
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-sm-12 col-med-11 col-lg-11">
+            <div class="card bg-light">
+                <div class="card-header">
+                    Data Source
+                </div>
+                Data Source Details Here.
             </div>
         </div>
     </div>
@@ -316,6 +109,6 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
-<script src="{{ url_for('static', filename='meathook.js') }}"></script>
+<script src="{{ url_for('static', filename='particlehub.js') }}"></script>
 </body>
 </html>
