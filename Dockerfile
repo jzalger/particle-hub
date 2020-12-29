@@ -5,6 +5,7 @@ RUN mkdir -p /deploy/particlehub/
 COPY particlehub /deploy/particlehub/
 ADD Pipfile.lock /deploy/
 ADD Pipfile /deploy/
+ADD gunicorn_config.py /deploy/
 ADD entrypoint.sh /deploy/
 WORKDIR /deploy
 RUN pipenv install --system --deploy --ignore-pipfile

@@ -1,4 +1,2 @@
 #!/bin/bash
-pwd
-ls -ls
-exec pipenv run gunicorn --config particlehub/gunicorn_config.py particlehub.wsgi:particlehub_app
+exec pipenv run gunicorn --config gunicorn_config.py particlehub.wsgi:particlehub_app
