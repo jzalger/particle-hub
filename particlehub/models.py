@@ -1,9 +1,11 @@
 import time
 import pickle
 import requests
+import threading
 import simplejson as json
 from string import Template
 from influxdb import InfluxDBClient
+from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 
 BASE_PARTICLE_URL = "https://api.particle.io/v1/"
 
@@ -23,7 +25,7 @@ class ParticleCloud:
             devices = request.json()
             return devices
         else:
-            return None
+            raise CloudCommunicationError
 
 
 class HubManager:
@@ -32,7 +34,6 @@ class HubManager:
         self.cloud = ParticleCloud(cloud_api_token)
         self.devices = devices
         self.log_managers = log_managers
-        self.threadpool = None
         self.state_filename = state_filename
 
         # TODO: May want to do a merge here to update new devices, but not delete management status of existing ones.
@@ -52,8 +53,8 @@ class HubManager:
         try:
             self.devices = self.cloud.get_devices()
             self._save_state()
-        except:
-            return None
+        except CloudCommunicationError:
+            self.devices = None
 
     def add_log_manager(self, device, log_source, log_credentials):
         device.log_managed = True
@@ -87,36 +88,39 @@ class LogManager:
         self.is_logging = False
         self.log_interval = log_interval
         self.log_function = log_functions[log_source]
+        self.thread = None
 
     def start_logging(self):
         self.is_logging = True
+        self.thread = threading.Thread(target=self.log_loop)
+        self.thread.start()
 
     def stop_logging(self):
         self.is_logging = False
+        self.thread.join()
 
     def log_loop(self):
         while True:
-            if self.is_logging:
-                self.device.get_all_variable_data()
-                self.log_function(new_data=self.device.variable_state, log_credentials=self.log_credentials,
-                                  tags=self.device.tags)
+            self.device.get_all_variable_data()
+            self.log_function(data=self.device.variable_state, log_credentials=self.log_credentials,
+                              tags=self.device.tags)
             time.sleep(self.log_interval)
 
 
 ###################################################################################################
 # Log Functions
 
-def _log_to_influx(new_data, log_credentials=None, tags=None):
-    # FIXME: update new data to receive the variable state dict
-    point = [{"measurement": new_data["name"], "fields": {"value": new_data["result"]}}]
-    if tags is not None:
-        point[0]["tags"] = tags
-    try:
-        # InfluxDBClient(influx_host, influx_port, influx_user, influx_password, influx_db_name)
-        client = InfluxDBClient(**log_credentials)
-        client.write_points(point)
-    except:
-        pass
+def _log_to_influx(data, log_credentials=None, tags=None):
+    for variable_name, value in data.iter_items():
+        point = [{"measurement": variable_name, "fields": {"value": value}, "tags": tags}]
+        try:
+            # InfluxDBClient(influx_host, influx_port, influx_user, influx_password, influx_db_name)
+            client = InfluxDBClient(**log_credentials)
+            client.write_points(point)
+        except InfluxDBClientError:
+            pass
+        except InfluxDBServerError:
+            pass
 
 
 log_functions = dict(influx=_log_to_influx)
@@ -155,7 +159,7 @@ class Device:
     def get_all_variable_data(self):
         for tag in self.tags:
             tag_val = self.get_variable_data(tag)
-            self.tags[tag] = tag_val["result"]
+            self.tags[tag] = tag_val
 
         for variable in self.variables:
             try:
@@ -229,4 +233,7 @@ class LogStartError(Exception):
 
 
 class LogStopError(Exception):
+    pass
+
+class CloudCommunicationError(Exception):
     pass
