@@ -16,7 +16,7 @@ class ParticleCloud:
         url = BASE_URL + "devices"
         request = requests.get(url, params=dict(access_token=self.cloud_api_token))
         if request.status_code == requests.codes.ok:
-            devices = dict(request.json())["result"]
+            devices = request.json()
             return devices
         else:
             return None
