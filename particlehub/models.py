@@ -22,7 +22,11 @@ class ParticleCloud:
         url = BASE_PARTICLE_URL + "devices"
         request = requests.get(url, params=dict(access_token=self.cloud_api_token))
         if request.status_code == requests.codes.ok:
-            devices = request.json()
+            devices = dict()
+            device_list = request.json()
+            for device_dict in device_list:
+                device = Device.from_dict(device_dict, self.cloud_api_token)
+                devices[device.id] = device
             return devices
         else:
             raise CloudCommunicationError
@@ -33,12 +37,15 @@ class HubManager:
     def __init__(self, cloud_api_token, devices=None, log_managers=None, state_filename="particle_hub.state"):
         self.cloud = ParticleCloud(cloud_api_token)
         self.devices = devices
-        self.log_managers = log_managers
         self.state_filename = state_filename
+        self.log_managers = log_managers
 
         # TODO: May want to do a merge here to update new devices, but not delete management status of existing ones.
         if devices is None:
             self.update_device_list()
+
+        if log_managers is None:
+            self.log_managers = dict()
 
     @classmethod
     def from_state_file(cls, cloud_api_token, state_filename="particle_hub.state"):
@@ -237,6 +244,7 @@ class LogStartError(Exception):
 
 class LogStopError(Exception):
     pass
+
 
 class CloudCommunicationError(Exception):
     pass

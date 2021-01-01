@@ -1,16 +1,25 @@
 $(document).ready(function(){
     update_device_table();
-    $("#start-all-logs").on("click", function(){
-        $.get("/start-all-logs", function(data, status){
 
+    // TODO: Manage use device checkmark
+    // TODO: Manage device detail selection and display
+
+    $("#add-unmanaged-devices").on("click", function(){
+        $.get("/add-unmanaged-devices", function(data, status){
+            update_device_table();
+        });
+    });
+
+    $("#start-logging-all").on("click", function(){
+        $.get("/start-logging-all", function(data, status){
+            update_device_table();
           });
     });
-    $("#stop-all-logs").on("click", function(){
-        $.get("/stop-all-logs", function(data, status){
-
+    $("#stop-logging-all").on("click", function(){
+        $.get("/stop-logging-all", function(data, status){
+             update_device_table();
           });
     });
-
 });
 
 function update_device_table() {
@@ -18,3 +27,4 @@ function update_device_table() {
     $('#device-list').html(data);
   });
 }
+

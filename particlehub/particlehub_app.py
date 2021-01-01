@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, make_response
-from models import ParticleCloud, HubManager, StateNotFoundError, LogStopError, LogStartError
-from secrets import cloud_api_token, log_config, web_host
+from models import ParticleCloud, HubManager, LogStopError, LogStartError
+from secrets import cloud_api_token, log_config, web_host, default_log_source
 
 
 app = Flask(__name__)
@@ -28,7 +28,7 @@ def get_devices():
     if devices is None:
         return make_response("<h3>No Devices Found</h3>", 200)
     response = ""
-    for device in devices:
+    for device_id, device in devices.items():
         response = response + render_template('device_list_row.html', device=device) + "\n"
     return make_response(response, 200)
 
@@ -52,10 +52,22 @@ def get_device_info():
 def add_device():
     log_source = request.args.get('log_source')
     device_id = request.args.get('id')
+    _add_device(device_id, log_source)
+    return make_response("success", 200)
+
+
+@app.route('/add-unmanaged-devices')
+def add_unmanaged_devices():
+    for device_id, device in hub_manager.devices.items():
+        if device.log_managed is not True:
+            _add_device(device.id, default_log_source)
+    return make_response("success", 200)
+
+
+def _add_device(device_id, log_source):
     device = hub_manager.devices[device_id]
     log_credentials = log_config[log_source]
     hub_manager.add_log_manager(device, log_source, log_credentials)
-    return make_response("success", 200)
 
 
 @app.route('/start-logging-device')
@@ -91,7 +103,7 @@ def _stop_logging_device(device_id):
 @app.route('/start-logging-all')
 def start_logging_all():
     try:
-        for device in hub_manager.devices:
+        for device_id, device in hub_manager.devices.items():
             _start_logging_device(device.id)
         return make_response(jsonify({"result": "success"}), 200)
     except LogStartError:
@@ -101,6 +113,8 @@ def start_logging_all():
 @app.route('/stop-logging-all')
 def stop_logging_all():
     try:
+        for device_id, device in hub_manager.devices.items():
+            _stop_logging_device(device.id)
         return make_response(jsonify({"result": "success"}), 200)
     except LogStopError:
         return make_response(jsonify({"result": "fail"}), 200)
