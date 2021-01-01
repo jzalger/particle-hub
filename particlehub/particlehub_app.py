@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from models import ParticleCloud, Photon
+from models import ParticleCloud, Device
 from secrets import cloud_api_token
 
 # Temp variables
@@ -22,7 +22,7 @@ def get_devices():
     return jsonify(devices)
 
 
-@app.route('get-device-info')
+@app.route('/get-device-info')
 def get_device_info():
     pass
 
