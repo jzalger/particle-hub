@@ -1,7 +1,16 @@
 <tr>
-    <td>Test Device</td>
-    <td>abc12345</td>
-    <td><span class="badge badge-pill badge-success">ON</span></td>
-    <td><input type="checkbox" aria-label="Use Device"></td>
+    <td>{{ device.name }}</td>
+    <td>{{ device.id }}</td>
+    {% if device.online %}
+        <td><span class="badge badge-pill badge-success">ON</span></td>
+    {% else %}
+        <td><span class="badge badge-pill badge-danger">OFF</span></td>
+    {% endif %}
+
+    {% if device.log_managed %}
+        <td><input type="checkbox" checked aria-label="Use Device"></td>
+    {% else %}
+        <td><input type="checkbox" aria-label="Use Device"></td>
+    {% endif %}
     <td><i class="far fa-play-circle"></i> <i class="fas fa-redo"></i></td>
 </tr>

@@ -30,7 +30,7 @@ class ParticleCloud:
 
 class HubManager:
 
-    def __init__(self, cloud_api_token, devices=None, log_managers=None, state_filename=None):
+    def __init__(self, cloud_api_token, devices=None, log_managers=None, state_filename="particle_hub.state"):
         self.cloud = ParticleCloud(cloud_api_token)
         self.devices = devices
         self.log_managers = log_managers
@@ -59,14 +59,14 @@ class HubManager:
     def add_log_manager(self, device, log_source, log_credentials):
         device.log_managed = True
         manager = LogManager(device, log_source=log_source, log_credentials=log_credentials)
-        self.log_managers[device.device_id] = manager
+        self.log_managers[device.id] = manager
         self._save_state()
 
     @staticmethod
     def _return_state(state_filename):
         """Load the previous program state from a pickle file"""
         try:
-            with open(state_filename, "r") as state_file:
+            with open(state_filename, "rb") as state_file:
                 state = pickle.load(state_file)
             return state
         except FileNotFoundError:
@@ -75,7 +75,7 @@ class HubManager:
     def _save_state(self):
         """Save the current app state to disk as a pickle file."""
         state = dict(devices=self.devices, log_managers=self.log_managers)
-        with open(self.state_filename, "w") as state_file:
+        with open(self.state_filename, "wb") as state_file:
             pickle.dump(state, state_file)
 
 
@@ -102,8 +102,8 @@ class LogManager:
     def log_loop(self):
         while True:
             self.device.get_all_variable_data()
-            self.log_function(data=self.device.variable_state, log_credentials=self.log_credentials,
-                              tags=self.device.tags)
+            # TODO: Remove before flight
+            # self.log_function(data=self.device.variable_state, log_credentials=self.log_credentials, tags=self.device.tags)
             time.sleep(self.log_interval)
 
 
@@ -131,14 +131,14 @@ log_functions = dict(influx=_log_to_influx)
 
 class Device:
     DEVICE_TYPE = "unknown"
-    API_DEVICE_URL = Template(BASE_PARTICLE_URL + "devices/$device_id/")
-    API_GET_URL = Template(BASE_PARTICLE_URL + "devices/$device_id/$var_name")
-    API_FUNC_URL = Template(BASE_PARTICLE_URL + "devices/$device_id/$func_name")
-    API_VITALS_URL = Template(BASE_PARTICLE_URL + "diagnostics/$device_id/last")
+    API_DEVICE_URL = Template(BASE_PARTICLE_URL + "devices/$id/")
+    API_GET_URL = Template(BASE_PARTICLE_URL + "devices/$id/$var_name")
+    API_FUNC_URL = Template(BASE_PARTICLE_URL + "devices/$id/$func_name")
+    API_VITALS_URL = Template(BASE_PARTICLE_URL + "diagnostics/$id/last")
 
     def __init__(self, device_id, cloud_api_token, name=None, tags=None, variables=None, variable_state=None,
                  notes=None, connected=None, online=None, status=None, log_managed=False):
-        self.device_id = device_id
+        self.id = device_id
         self.log_managed = log_managed
         self.cloud_api_token = cloud_api_token
         self.name = name
@@ -177,7 +177,7 @@ class Device:
         self.variables = json.loads(new_info)["variables"]
 
     def full_device_data(self):
-        new_info = send_get_request(url=Device.API_DEVICE_URL.substitute(dict(device_id=self.device_id)),
+        new_info = send_get_request(url=Device.API_DEVICE_URL.substitute(dict(device_id=self.id)),
                                     params=dict(access_token=self.cloud_api_token))
         return json.loads(new_info)
 
@@ -185,13 +185,13 @@ class Device:
         """Returns the current device state as a JSON formatted string"""
         if var not in self.variables:
             return dict()
-        val = send_get_request(url=Device.API_GET_URL.substitute(dict(device_id=self.device_id, var_name=var)),
+        val = send_get_request(url=Device.API_GET_URL.substitute(dict(device_id=self.id, var_name=var)),
                                params=dict(access_token=self.cloud_api_token))
         return val
 
     def _call_func(self, func_name, arg):
         result = send_post_request(url=Device.API_FUNC_URL.substitute(
-            dict(device_id=self.device_id, func_name=func_name)),
+            dict(device_id=self.id, func_name=func_name)),
             data=dict(args=str(arg), access_token=self.cloud_api_token),
             except_return=False)
         return result

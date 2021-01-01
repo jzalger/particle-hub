@@ -13,6 +13,7 @@
     <script src="https://kit.fontawesome.com/04d344c588.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='particlehub.css') }}">
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <title>Particle Hub</title>
 </head>
 
@@ -85,14 +86,8 @@
                         <th>Log Control</th>
                     </tr>
                     </thead>
-                    <tbody>
-                    <tr>
-                        <td>Test Device</td>
-                        <td>abc12345</td>
-                        <td><span class="badge badge-pill badge-success">ON</span></td>
-                        <td><input type="checkbox" aria-label="Use Device"></td>
-                        <td><i class="far fa-play-circle"></i> <i class="fas fa-redo"></i></td>
-                    </tr>
+                    <tbody id="device-list">
+                        <!-- Load Device List here via AJAX -->
                     </tbody>
                 </table>
             </div>
