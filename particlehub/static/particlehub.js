@@ -1,8 +1,5 @@
-$(document).ready(function(){
+$(document).ready(function($){
     update_device_table();
-
-    // TODO: Manage use device checkmark
-    // TODO: Manage device detail selection and display
 
     $("#add-unmanaged-devices").on("click", function(){
         $.get("/add-unmanaged-devices", function(data, status){
@@ -25,6 +22,13 @@ $(document).ready(function(){
 function update_device_table() {
   $.get("/get-devices", function(data, status){
     $('#device-list').html(data);
+    // Attach callbacks to the new rows.
+    $("tbody tr").click(function () {
+        let device_id = $(this).attr('data-id');
+        $.get("/get-device-info", {"device_id": device_id}, function(data, status){
+            $("#device-details").html(data);
+        });
+    });
   });
 }
 

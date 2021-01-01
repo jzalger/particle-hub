@@ -1,4 +1,4 @@
-<tr>
+<tr data-id="{{ device.id }}">
     <td>{{ device.name }}</td>
     <td>{{ device.id }}</td>
     {% if device.online %}
@@ -14,9 +14,9 @@
     {% endif %}
 
     {% if device.log_managed %}
-        <td><input type="checkbox" checked aria-label="Use Device"></td>
+        <td><button class="btn btn-danger btn-sm remove-device-btn" disabled type="button">Remove</button></td>
     {% else %}
-        <td><input type="checkbox" aria-label="Use Device"></td>
+        <td><button class="btn btn-success btn-sm add-device-btn" disabled type="button">Add</button></td>
     {% endif %}
     <td><i class="far fa-play-circle"></i> <i class="fas fa-redo"></i></td>
 </tr>

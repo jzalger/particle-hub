@@ -41,11 +41,11 @@ def refresh_all_devices():
 
 @app.route('/get-device-info')
 def get_device_info():
-    device_id = request.args.get('id')
+    device_id = request.args.get('device_id')
     device = hub_manager.devices[device_id]
     device_info = device.full_device_data()
-    # FIXME: Return the HTML here
-    return make_response(jsonify(device_info), 200)
+    response = render_template("device_info.html", device_info=device_info)
+    return make_response(response, 200)
 
 
 @app.route('/add-device')
