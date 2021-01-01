@@ -4,7 +4,13 @@
     {% if device.online %}
         <td><span class="badge badge-pill badge-success">ON</span></td>
     {% else %}
-        <td><span class="badge badge-pill badge-danger">OFF</span></td>
+        <td><span class="badge badge-pill badge-secondary">OFF</span></td>
+    {% endif %}
+
+    {% if device.is_logging %}
+        <td><span class="badge badge-pill badge-success">Yes</span></td>
+    {% else %}
+        <td><span class="badge badge-pill badge-secondary">No</span></td>
     {% endif %}
 
     {% if device.log_managed %}

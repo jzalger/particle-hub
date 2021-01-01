@@ -92,11 +92,13 @@ class LogManager:
 
     def start_logging(self):
         self.is_logging = True
+        self.device.is_logging = True
         self.thread = threading.Thread(target=self.log_loop)
         self.thread.start()
 
     def stop_logging(self):
         self.is_logging = False
+        self.device.is_logging = False
         self.thread.join()
 
     def log_loop(self):
@@ -149,6 +151,7 @@ class Device:
         self.connected = connected
         self.online = online
         self.status = status
+        self.is_logging = False
 
     @classmethod
     def from_dict(cls, input_dict, cloud_api_token):
