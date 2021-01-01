@@ -10,6 +10,7 @@ apscheduler = "*"
 pyyaml = "*"
 gunicorn = "*"
 simplejson = "*"
+influxdb = "*"
 
 [dev-packages]
 
