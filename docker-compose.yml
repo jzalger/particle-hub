@@ -4,3 +4,11 @@ services:
     build: .
     ports:
       - "80:5000"
+    environment:
+      PHCONFIG_FILE: /run/secrets/phconfig.py
+    secrets:
+      - phconfig.py
+
+secrets:
+  phconfig.py:
+    file: phconfig.py

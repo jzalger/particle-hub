@@ -1,17 +1,20 @@
+import os
+import importlib.util
 from flask import Flask, render_template, request, jsonify, make_response
-from .models import ParticleCloud, HubManager, LogStopError, LogStartError, StateNotFoundError
-from .secrets import cloud_api_token, log_config, web_host, default_log_source
-
+from particlehub.models import ParticleCloud, HubManager, LogStopError, LogStartError, StateNotFoundError
+spec = importlib.util.spec_from_file_location("phconfig", os.getenv("PHCONFIG_FILE"))
+phconfig = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(phconfig)
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
 
-cloud = ParticleCloud(cloud_api_token)
+cloud = ParticleCloud(phconfig.cloud_api_token)
 
 try:
-    hub_manager = HubManager.from_state_file(cloud_api_token)
+    hub_manager = HubManager.from_state_file(phconfig.cloud_api_token)
 except StateNotFoundError:
-    hub_manager = HubManager(cloud_api_token)
+    hub_manager = HubManager(phconfig.cloud_api_token)
 
 
 @app.route('/')
@@ -57,13 +60,13 @@ def add_device():
 def add_unmanaged_devices():
     for device_id, device in hub_manager.devices.items():
         if device.log_managed is not True:
-            _add_device(device.id, default_log_source)
+            _add_device(device.id, phconfig.default_log_source)
     return make_response("success", 200)
 
 
 def _add_device(device_id, log_source):
     device = hub_manager.devices[device_id]
-    log_credentials = log_config[log_source]
+    log_credentials = phconfig.log_config[log_source]
     hub_manager.add_log_manager(device, log_source, log_credentials)
 
 
@@ -150,4 +153,4 @@ def stop_logging_all():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host=web_host)
+    app.run(debug=True, host=phconfig.web_host)
