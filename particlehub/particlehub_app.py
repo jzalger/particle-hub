@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, make_response
-from particlehub.models import ParticleCloud, HubManager, LogStopError, LogStartError, StateNotFoundError
-from particlehub.secrets import cloud_api_token, log_config, web_host, default_log_source
+from .models import ParticleCloud, HubManager, LogStopError, LogStartError, StateNotFoundError
+from .secrets import cloud_api_token, log_config, web_host, default_log_source
 
 
 app = Flask(__name__)
