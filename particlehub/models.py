@@ -96,7 +96,7 @@ class HubManager:
 
 class LogManager:
 
-    def __init__(self, device, log_source="influx", log_credentials=None, log_interval=20):
+    def __init__(self, device, log_source="influx", log_credentials=None, log_interval=300):
         self.device = device
         self.log_source = log_source
         self.log_credentials = log_credentials
