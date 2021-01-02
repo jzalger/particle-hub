@@ -59,7 +59,7 @@ class HubManager:
     def update_device_list(self):
         try:
             self.devices = self.cloud.get_devices()
-            self._save_state()
+            self.save_state()
         except CloudCommunicationError:
             self.devices = None
 
@@ -67,7 +67,7 @@ class HubManager:
         device.log_managed = True
         manager = LogManager(device, log_source=log_source, log_credentials=log_credentials)
         self.log_managers[device.id] = manager
-        self._save_state()
+        self.save_state()
 
     def remove_log_manager(self, device_id):
         log_manager = self.log_managers[device_id]
@@ -75,6 +75,7 @@ class HubManager:
         device.log_managed = False
         log_manager.stop_logging()  # Call stop here to make sure threads are killed.
         del self.log_managers[device_id]
+        self.save_state()
 
     @staticmethod
     def _return_state(state_filename):
@@ -86,7 +87,7 @@ class HubManager:
         except FileNotFoundError:
             return None
 
-    def _save_state(self):
+    def save_state(self):
         """Save the current app state to disk as a pickle file."""
         state = dict(devices=self.devices, log_managers=self.log_managers)
         with open(self.state_filename, "wb") as state_file:
@@ -95,7 +96,7 @@ class HubManager:
 
 class LogManager:
 
-    def __init__(self, device, log_source="influx", log_credentials=None, log_interval=300):
+    def __init__(self, device, log_source="influx", log_credentials=None, log_interval=20):
         self.device = device
         self.log_source = log_source
         self.log_credentials = log_credentials
@@ -114,12 +115,14 @@ class LogManager:
         self.is_logging = False
         self.device.is_logging = False
         try:
+            self.thread.log = False
             self.thread.join()
         except AttributeError:
             pass
 
     def log_loop(self):
-        while True:
+        thread = threading.current_thread()
+        while getattr(thread, "log", True):
             self.device.get_all_variable_data()
             self.log_function(data=self.device.variable_state, log_credentials=self.log_credentials, tags=self.device.tags)
             time.sleep(self.log_interval)
@@ -130,12 +133,13 @@ class LogManager:
 
 def _log_to_influx(data, log_credentials=None, tags=None):
     for variable_name, value in data.items():
+        if variable_name in tags:
+            break
         point = [{"measurement": variable_name, "fields": {"value": value}, "tags": tags}]
         try:
             # InfluxDBClient(influx_host, influx_port, influx_user, influx_password, influx_db_name)
             client = InfluxDBClient(**log_credentials)
             # TODO: remove before flight
-            print("writing to influx")
             print(point)
             # client.write_points(point)
         except InfluxDBClientError:
@@ -219,8 +223,7 @@ class Device:
             return dict()
         val = send_get_request(url=Device.API_GET_URL.substitute(dict(id=self.id, var_name=var)),
                                params=dict(access_token=self.cloud_api_token))
-        # TODO: confirm we dont need val['result'] here
-        return val
+        return val["result"]
 
     def _call_func(self, func_name, arg):
         result = send_post_request(url=Device.API_FUNC_URL.substitute(

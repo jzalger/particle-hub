@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, make_response
-from models import ParticleCloud, HubManager, LogStopError, LogStartError
+from models import ParticleCloud, HubManager, LogStopError, LogStartError, StateNotFoundError
 from secrets import cloud_api_token, log_config, web_host, default_log_source
 
 
@@ -8,13 +8,10 @@ app.config['DEBUG'] = True
 
 cloud = ParticleCloud(cloud_api_token)
 
-# try:
-#     hub_manager = HubManager.from_state_file(cloud_api_token)
-# except StateNotFoundError:
-#     hub_manager = HubManager(cloud_api_token)
-
-# TODO: Remove before flight
-hub_manager = HubManager(cloud_api_token)
+try:
+    hub_manager = HubManager.from_state_file(cloud_api_token)
+except StateNotFoundError:
+    hub_manager = HubManager(cloud_api_token)
 
 
 @app.route('/')
@@ -88,7 +85,10 @@ def add_tag():
     tag = request.args.get('tag')
     device = hub_manager.devices[device_id]
     device.tags[tag] = None
+    hub_manager.save_state()
     return make_response(jsonify(dict(status="success", tag=tag)), 200)
+
+# TODO: Add a remove-tag endpoint
 
 
 @app.route('/start-logging-device')
