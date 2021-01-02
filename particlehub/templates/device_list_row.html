@@ -1,0 +1,23 @@
+<tr>
+    {% if device.online %}
+        <td data-id="{{ device.id }}" class="device-row"><span class="badge badge-pill badge-success"> </span></td>
+    {% else %}
+        <td data-id="{{ device.id }}" class="device-row"><span class="badge badge-pill badge-secondary"> </span></td>
+    {% endif %}
+    <td data-id="{{ device.id }}" class="device-row">{{ device.name }}</td>
+    <td data-id="{{ device.id }}" class="device-row">{{ device.id }}</td>
+
+    {% if device.is_logging %}
+        <td data-id="{{ device.id }}" class="device-row"><span class="badge badge-pill badge-success">YES</span></td>
+    {% else %}
+        <td data-id="{{ device.id }}" class="device-row"><span class="badge badge-pill badge-secondary">NO</span></td>
+    {% endif %}
+
+    <td><i class="far fa-play-circle"></i> <i class="fas fa-redo"></i></td>
+
+    {% if device.log_managed %}
+        <td><button data-id="{{ device.id }}" class="btn btn-danger btn-sm remove-device-btn remove-device-btn" type="button">Remove</button></td>
+    {% else %}
+        <td><button data-id="{{ device.id }}" data-log-source="influx" class="btn btn-success btn-sm add-device-btn add-device-btn" type="button">Add</button></td>
+    {% endif %}
+</tr>

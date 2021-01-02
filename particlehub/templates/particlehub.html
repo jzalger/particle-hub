@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300&family=Raleway&display=swap"
+          rel="stylesheet">
+    <script src="https://kit.fontawesome.com/04d344c588.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='particlehub.css') }}">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Particle Hub</title>
+</head>
+
+<body>
+<div class="modal fade" id="settings-modal" tabindex="-1" role="dialog" aria-labelledby="SettingsModal"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Settings</h3>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12 col-med-6 col-lg-6">
+                        <h5>Particle API Credentials</h5>
+                        <p>API Key</p>
+                        <p>Secret Key</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 col-med-6 col-lg-6">
+                        <h5>Influx DB Credentials</h5>
+                        <p>Host Name</p>
+                        <p>User Name</p>
+                        <p>Password</p>
+                        <p>Database</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-wifi"></i>
+            Particle Hub</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+                aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbar">
+            <button class="btn btn-secondary ml-auto" id="settings-modal-btn" data-toggle="modal"
+                    data-target="#settings-modal" type="button"><i class="fas fa-cog"></i></button>
+        </div>
+    </nav>
+
+    <div class="row main-row justify-content-center">
+        <div class="col-sm-12 col-med-11 col-lg-11">
+            <div class="card bg-light">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    Devices
+                    <span>
+                        <button class="btn btn-outline-info btn-sm" id="add-unmanaged-devices" type="button">Add Unmanaged</button>
+                        <button class="btn btn-success btn-sm" id="start-logging-all" type="button">Start Logging All</button>
+                        <button class="btn btn-danger btn-sm" id="stop-logging-all" type="button">Stop Logging All</button>
+                    </span>
+                </div>
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Name</th>
+                        <th>ID</th>
+                        <th>Logging</th>
+                        <th>Add/Remove</th>
+                        <th>Log Control</th>
+                    </tr>
+                    </thead>
+                    <tbody id="device-list">
+                        <!-- Load Device List here via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="device-details">
+        <!--Device details inserted here -->
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='particlehub.js') }}"></script>
+</body>
+</html>
