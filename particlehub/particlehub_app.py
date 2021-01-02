@@ -41,10 +41,9 @@ def refresh_all_devices():
 
 @app.route('/get-device-info')
 def get_device_info():
-    device_id = request.args.get('device_id')
+    device_id = request.args.get('id')
     device = hub_manager.devices[device_id]
     device_info = device.full_device_data()
-    print(device_info)
     response = render_template("device_info.html", device_info=device_info)
     return make_response(response, 200)
 
@@ -69,6 +68,15 @@ def _add_device(device_id, log_source):
     device = hub_manager.devices[device_id]
     log_credentials = log_config[log_source]
     hub_manager.add_log_manager(device, log_source, log_credentials)
+
+
+@app.route('/add-tag')
+def add_tag():
+    device_id = request.args.get('id')
+    tag = request.args.get('tag')
+    device = hub_manager.devices[device_id]
+    device.tags.append(tag)
+    return make_response(jsonify(dict(status="success", tag=tag)), 200)
 
 
 @app.route('/start-logging-device')
@@ -97,8 +105,11 @@ def stop_logging_device():
 
 
 def _stop_logging_device(device_id):
-    log_manager = hub_manager.log_managers[device_id]
-    log_manager.stop_logging()
+    try:
+        log_manager = hub_manager.log_managers[device_id]
+        log_manager.stop_logging()
+    except KeyError:
+        pass
 
 
 @app.route('/start-logging-all')
@@ -113,6 +124,7 @@ def start_logging_all():
 
 @app.route('/stop-logging-all')
 def stop_logging_all():
+    print("stopping all logging")
     try:
         for device_id, device in hub_manager.devices.items():
             _stop_logging_device(device.id)

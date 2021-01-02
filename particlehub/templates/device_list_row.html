@@ -1,16 +1,16 @@
 <tr data-id="{{ device.id }}">
+    {% if device.online %}
+        <td><span class="badge badge-pill badge-success"> </span></td>
+    {% else %}
+        <td><span class="badge badge-pill badge-secondary"> </span></td>
+    {% endif %}
     <td>{{ device.name }}</td>
     <td>{{ device.id }}</td>
-    {% if device.online %}
-        <td><span class="badge badge-pill badge-success">ON</span></td>
-    {% else %}
-        <td><span class="badge badge-pill badge-secondary">OFF</span></td>
-    {% endif %}
 
     {% if device.is_logging %}
-        <td><span class="badge badge-pill badge-success">Yes</span></td>
+        <td><span class="badge badge-pill badge-success">YES</span></td>
     {% else %}
-        <td><span class="badge badge-pill badge-secondary">No</span></td>
+        <td><span class="badge badge-pill badge-secondary">NO</span></td>
     {% endif %}
 
     {% if device.log_managed %}

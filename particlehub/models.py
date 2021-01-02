@@ -160,6 +160,11 @@ class Device:
         self.status = status
         self.is_logging = False
 
+        if variable_state is None:
+            self.variable_state = dict()
+        if tags is None:
+            self.tags = list()
+
     def __str__(self):
         return f'Device id: {self.id}\nname: {self.name}\nvariables: {self.variables}'
 
@@ -170,9 +175,10 @@ class Device:
                    status=input_dict["status"])
 
     def get_all_variable_data(self):
-        for tag in self.tags:
-            tag_val = self.get_variable_data(tag)
-            self.tags[tag] = tag_val
+        if self.tags is not None:
+            for tag in self.tags:
+                tag_val = self.get_variable_data(tag)
+                self.tags[tag] = tag_val
 
         for variable in self.variables:
             try:
@@ -192,6 +198,7 @@ class Device:
     def full_device_data(self):
         new_info = send_get_request(url=Device.API_DEVICE_URL.substitute(dict(id=self.id)),
                                     params=dict(access_token=self.cloud_api_token))
+        new_info["tags"] = self.tags
         return new_info
 
     def get_variable_data(self, var):

@@ -34,8 +34,11 @@
                             <small>Select a variable to denote a tag</small>
                         </button>
                         {% for variable in device_info.variables %}
-                        <button type="button" data-id="{{ device_info.id }}"
-                                class="list-group-item list-group-item-action">{{ variable }}
+                        <button type="button" data-tag="{{ variable }}" data-id="{{ device_info.id }}"
+                                class="list-group-item list-group-item-action tag-row">{{ variable }}
+                            {% if variable in device_info.tags %}
+                                <i class="fas fa-tag text-info"></i>
+                            {% endif %}
                         </button>
                         {% endfor %}
                     </div>

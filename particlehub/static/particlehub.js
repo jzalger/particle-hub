@@ -25,8 +25,17 @@ function update_device_table() {
     // Attach callbacks to the new rows.
     $("tbody tr").click(function () {
         let device_id = $(this).attr('data-id');
-        $.get("/get-device-info", {"device_id": device_id}, function(data, status){
+        $.get("/get-device-info", {"id": device_id}, function(data, status){
             $("#device-details").html(data);
+            // Attach tagging callbacks to the variable rows
+            $(".tag-row").click(function (){
+                let device_id = $(this).attr('data-id');
+                let tag = $(this).attr('data-tag');
+                $.get("/add-tag", {"id": device_id, "tag": tag}, function(data, status){
+                    let row = $("button[data-tag='" + data.tag +"']");
+                    $(row).append('<i class="fas fa-tag text-info"></i>');
+                });
+            });
         });
     });
   });
