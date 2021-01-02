@@ -23,7 +23,7 @@ function update_device_table() {
   $.get("/get-devices", function(data, status){
     $('#device-list').html(data);
 
-    // FIXME: This code needs to be abstracted
+    // TODO: This code needs to be abstracted
     // Attach detail info callbacks to the new rows.
     $(".device-row").click(function () {
         let device_id = $(this).attr('data-id');

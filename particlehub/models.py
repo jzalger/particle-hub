@@ -124,7 +124,9 @@ class LogManager:
         thread = threading.current_thread()
         while getattr(thread, "log", True):
             self.device.get_all_variable_data()
-            self.log_function(data=self.device.variable_state, log_credentials=self.log_credentials, tags=self.device.tags)
+            self.log_function(data=self.device.variable_state,
+                              log_credentials=self.log_credentials,
+                              tags=self.device.tags)
             time.sleep(self.log_interval)
 
 
@@ -138,7 +140,6 @@ def _log_to_influx(data, log_credentials=None, tags=None):
         point = [{"measurement": variable_name, "fields": {"value": value}, "tags": tags}]
         try:
             client = InfluxDBClient(**log_credentials)
-            print(point)
             client.write_points(point)
         except InfluxDBClientError:
             pass
