@@ -44,6 +44,7 @@ def get_device_info():
     device_id = request.args.get('device_id')
     device = hub_manager.devices[device_id]
     device_info = device.full_device_data()
+    print(device_info)
     response = render_template("device_info.html", device_info=device_info)
     return make_response(response, 200)
 

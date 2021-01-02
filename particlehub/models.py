@@ -160,6 +160,9 @@ class Device:
         self.status = status
         self.is_logging = False
 
+    def __str__(self):
+        return f'Device id: {self.id}\nname: {self.name}\nvariables: {self.variables}'
+
     @classmethod
     def from_dict(cls, input_dict, cloud_api_token):
         return cls(input_dict["id"], cloud_api_token, name=input_dict["name"], variables=input_dict["variables"],
@@ -187,21 +190,22 @@ class Device:
         self.variables = json.loads(new_info)["variables"]
 
     def full_device_data(self):
-        new_info = send_get_request(url=Device.API_DEVICE_URL.substitute(dict(device_id=self.id)),
+        new_info = send_get_request(url=Device.API_DEVICE_URL.substitute(dict(id=self.id)),
                                     params=dict(access_token=self.cloud_api_token))
-        return json.loads(new_info)
+        return new_info
 
     def get_variable_data(self, var):
         """Returns the current device state as a JSON formatted string"""
         if var not in self.variables:
             return dict()
-        val = send_get_request(url=Device.API_GET_URL.substitute(dict(device_id=self.id, var_name=var)),
+        val = send_get_request(url=Device.API_GET_URL.substitute(dict(id=self.id, var_name=var)),
                                params=dict(access_token=self.cloud_api_token))
+        # TODO: confirm we dont need val['result'] here
         return val
 
     def _call_func(self, func_name, arg):
         result = send_post_request(url=Device.API_FUNC_URL.substitute(
-            dict(device_id=self.id, func_name=func_name)),
+            dict(id=self.id, func_name=func_name)),
             data=dict(args=str(arg), access_token=self.cloud_api_token),
             except_return=False)
         return result
@@ -214,7 +218,7 @@ def send_get_request(url, params, except_return=None):
     try:
         r = requests.get(url, params=params)
         if r.status_code == requests.codes.ok:
-            return dict(r.json())["result"]
+            return dict(r.json())
         else:
             return None
     except requests.exceptions.RequestException:
