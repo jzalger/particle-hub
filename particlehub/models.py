@@ -137,11 +137,9 @@ def _log_to_influx(data, log_credentials=None, tags=None):
             break
         point = [{"measurement": variable_name, "fields": {"value": value}, "tags": tags}]
         try:
-            # InfluxDBClient(influx_host, influx_port, influx_user, influx_password, influx_db_name)
             client = InfluxDBClient(**log_credentials)
-            # TODO: remove before flight
             print(point)
-            # client.write_points(point)
+            client.write_points(point)
         except InfluxDBClientError:
             pass
         except InfluxDBServerError:
