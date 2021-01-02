@@ -142,9 +142,9 @@ def _log_to_influx(data, log_credentials=None, tags=None):
             client = InfluxDBClient(**log_credentials)
             client.write_points(point)
         except InfluxDBClientError:
-            pass
+            print("InfluxDBClientError")
         except InfluxDBServerError:
-            pass
+            print("InfluxDBServerError")
 
 
 log_functions = dict(influx=_log_to_influx)
