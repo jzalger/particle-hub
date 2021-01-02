@@ -69,6 +69,13 @@ class HubManager:
         self.log_managers[device.id] = manager
         self._save_state()
 
+    def remove_log_manager(self, device_id):
+        log_manager = self.log_managers[device_id]
+        device = self.devices[device_id]
+        device.log_managed = False
+        log_manager.stop_logging()  # Call stop here to make sure threads are killed.
+        del self.log_managers[device_id]
+
     @staticmethod
     def _return_state(state_filename):
         """Load the previous program state from a pickle file"""
@@ -106,13 +113,15 @@ class LogManager:
     def stop_logging(self):
         self.is_logging = False
         self.device.is_logging = False
-        self.thread.join()
+        try:
+            self.thread.join()
+        except AttributeError:
+            pass
 
     def log_loop(self):
         while True:
             self.device.get_all_variable_data()
-            # TODO: Remove before flight
-            # self.log_function(data=self.device.variable_state, log_credentials=self.log_credentials, tags=self.device.tags)
+            self.log_function(data=self.device.variable_state, log_credentials=self.log_credentials, tags=self.device.tags)
             time.sleep(self.log_interval)
 
 
@@ -120,12 +129,15 @@ class LogManager:
 # Log Functions
 
 def _log_to_influx(data, log_credentials=None, tags=None):
-    for variable_name, value in data.iter_items():
+    for variable_name, value in data.items():
         point = [{"measurement": variable_name, "fields": {"value": value}, "tags": tags}]
         try:
             # InfluxDBClient(influx_host, influx_port, influx_user, influx_password, influx_db_name)
             client = InfluxDBClient(**log_credentials)
-            client.write_points(point)
+            # TODO: remove before flight
+            print("writing to influx")
+            print(point)
+            # client.write_points(point)
         except InfluxDBClientError:
             pass
         except InfluxDBServerError:
@@ -163,7 +175,7 @@ class Device:
         if variable_state is None:
             self.variable_state = dict()
         if tags is None:
-            self.tags = list()
+            self.tags = dict()
 
     def __str__(self):
         return f'Device id: {self.id}\nname: {self.name}\nvariables: {self.variables}'

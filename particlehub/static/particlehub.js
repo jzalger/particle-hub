@@ -22,11 +22,14 @@ $(document).ready(function($){
 function update_device_table() {
   $.get("/get-devices", function(data, status){
     $('#device-list').html(data);
-    // Attach callbacks to the new rows.
-    $("tbody tr").click(function () {
+
+    // FIXME: This code needs to be abstracted
+    // Attach detail info callbacks to the new rows.
+    $(".device-row").click(function () {
         let device_id = $(this).attr('data-id');
         $.get("/get-device-info", {"id": device_id}, function(data, status){
             $("#device-details").html(data);
+
             // Attach tagging callbacks to the variable rows
             $(".tag-row").click(function (){
                 let device_id = $(this).attr('data-id');
@@ -36,6 +39,20 @@ function update_device_table() {
                     $(row).append('<i class="fas fa-tag text-info"></i>');
                 });
             });
+        });
+    });
+    // Attach callbacks for add/remove
+    $(".remove-device-btn").click(function(){
+        let device_id = $(this).attr('data-id');
+        $.get("/remove-device", {"id": device_id}, function(data, status){
+            update_device_table();
+        });
+    });
+    $(".add-device-btn").click(function(){
+        let device_id = $(this).attr('data-id');
+        let log_source = $(this).attr('data-log-source');
+        $.get("/add-device", {"id": device_id, "log_source": log_source}, function(data, status){
+            update_device_table();
         });
     });
   });

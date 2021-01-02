@@ -70,12 +70,24 @@ def _add_device(device_id, log_source):
     hub_manager.add_log_manager(device, log_source, log_credentials)
 
 
+# TODO: remove_device nomenclature is confusing. Should be remove_log_manager or something.
+@app.route('/remove-device')
+def remove_device():
+    device_id = request.args.get('id')
+    _remove_device(device_id)
+    return make_response("success", 200)
+
+
+def _remove_device(device_id):
+    hub_manager.remove_log_manager(device_id)
+
+
 @app.route('/add-tag')
 def add_tag():
     device_id = request.args.get('id')
     tag = request.args.get('tag')
     device = hub_manager.devices[device_id]
-    device.tags.append(tag)
+    device.tags[tag] = None
     return make_response(jsonify(dict(status="success", tag=tag)), 200)
 
 
@@ -90,8 +102,12 @@ def start_logging_device():
 
 
 def _start_logging_device(device_id):
-    log_manager = hub_manager.log_managers[device_id]
-    log_manager.start_logging()
+    try:
+        log_manager = hub_manager.log_managers[device_id]
+        log_manager.start_logging()
+    except KeyError:
+        return make_response(jsonify({"result": "fail",
+                                      "message": "Log manager does not exist. Check if device is being managed"}), 200)
 
 
 @app.route('/stop-logging-device')
