@@ -1,6 +1,8 @@
 # particle-hub
 A data logging hub for the Particle IoT platform.
 
+## Docker-compose reference
+`docker-compose up` from project root directory.
 
 ## Docker Command reference
 Build the image
@@ -9,3 +11,8 @@ Build the image
 Run the image:
 `docker run -p80:5000 particlehub:latest`
 
+Stopping all images
+`docker ps -a -q | xargs docker rm`
+
+Removing all images:
+`docker images -a -q | xargs docker rmi -f`
