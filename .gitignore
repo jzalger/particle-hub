@@ -3,6 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+secrets.py
+config.py
+secrets.yaml
+config.yaml
+phconfig.py
+*~
+.idea/
+
 # C extensions
 *.so
 
@@ -127,3 +135,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+particle_hub.state
