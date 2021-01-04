@@ -1,7 +1,7 @@
 import time
 import pickle
 import requests
-import threading
+import multiprocessing
 import simplejson as json
 from string import Template
 from influxdb import InfluxDBClient
@@ -103,26 +103,27 @@ class LogManager:
         self.is_logging = False
         self.log_interval = log_interval
         self.log_function = log_functions[log_source]
-        self.thread = None
+        self.process = None
 
     def start_logging(self):
         self.is_logging = True
         self.device.is_logging = True
-        self.thread = threading.Thread(target=self.log_loop)
-        self.thread.start()
+        self.process = multiprocessing.Process(target=self.log_loop)
+        self.process.start()
 
     def stop_logging(self):
         self.is_logging = False
         self.device.is_logging = False
         try:
-            self.thread.log = False
-            self.thread.join()
+            self.process.log = False
+            self.process.terminate()
+            self.process.join()
         except AttributeError:
             pass
 
     def log_loop(self):
-        thread = threading.current_thread()
-        while getattr(thread, "log", True):
+        process = multiprocessing.current_process()
+        while getattr(process, "log", True):
             self.device.get_all_variable_data()
             self.log_function(data=self.device.variable_state,
                               log_credentials=self.log_credentials,
