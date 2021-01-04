@@ -40,9 +40,7 @@ class HubManager:
         self.state_filename = state_filename
         self.log_managers = log_managers
 
-        # TODO: May want to do a merge here to update new devices, but not delete management status of existing ones.
-        if devices is None:
-            self.update_device_list()
+        self.update_device_list()
 
         if log_managers is None:
             self.log_managers = dict()
@@ -58,7 +56,12 @@ class HubManager:
 
     def update_device_list(self):
         try:
-            self.devices = self.cloud.get_devices()
+            new_devices = self.cloud.get_devices()
+            if self.devices is not None:
+                for device in self.devices:
+                    if device in new_devices:
+                        new_devices[device].tags = self.devices[device].tags
+            self.devices = new_devices
             self.save_state()
         except CloudCommunicationError:
             self.devices = None
