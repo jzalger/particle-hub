@@ -6,6 +6,7 @@ services:
       - "5000:5000"
     environment:
       PHCONFIG_FILE: /run/secrets/phconfig.py
+    restart: always
     secrets:
       - phconfig.py
 
