@@ -14,12 +14,15 @@ job "particlehub" {
 
     service {
       name = "particlehub"
+      tags = ["particlehub", "webservice", "tls", "vault"]
       port = "https"
       check {
         type     = "http"
+        protocol = "https"
         path     = "/"
-        interval = "30s"
-        timeout  = "5s"
+        interval = "60s"
+        timeout  = "10s"
+        tls_skip_verify = true
       }
     }
 
@@ -33,7 +36,7 @@ job "particlehub" {
       config {
         image = "jzalger/particlehub:latest"
         ports = ["https"]
-        volumes = ["secrets/phconfig.py:/run/secrets/phconfig.py"]
+        volumes = ["secrets:/run/secrets"]
       }
 
       template {
@@ -73,7 +76,7 @@ EOF
         destination = "secrets/phconfig.py"
       }
       resources {
-        cpu    = 512 # MHz
+        cpu    = 1024 # MHz
         memory = 300 # MB
       }
       vault {
