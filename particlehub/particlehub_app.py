@@ -9,7 +9,6 @@ phconfig = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(phconfig)
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
 
 phlog = logging.getLogger('particle-hub')
 phlog.setLevel(logging.INFO)
