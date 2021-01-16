@@ -35,6 +35,25 @@ job "particlehub" {
         ports = ["http"]
         volumes = ["secrets/phconfig.py:/run/secrets/phconfig.py"]
       }
+
+      template {
+        data = <<EOF
+{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=24h"}}
+{{ .Data.private_key }}
+{{ end }}
+EOF
+        destination = "secrets/particlehub.key"
+      }
+
+      template {
+        data = <<EOF
+{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=24h"}}
+{{ .Data.certificate }}
+{{ end }}
+EOF
+        destination = "secrets/particlehub.crt"
+      }
+
       template {
         data = <<EOF
 {{ with secret "kv/data/machine/dev/apps/particlehub" }}
@@ -53,29 +72,12 @@ syslog_host = {{ .Data.data.syslog_host }}
 EOF
         destination = "secrets/phconfig.py"
       }
-
-      template {
-        data = <<EOF
-{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=30d"}}
-{{ .Data.certificate }}
-{{ end }}
-EOF
-        destination = "secrets/particlehub.crt"
-      }
-      template {
-        data = <<EOF
-{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=30d"}}
-{{ .Data.private_key }}
-{{ end }}
-EOF
-        destination = "secrets/particlehub.key"
-      }
       resources {
         cpu    = 512 # MHz
         memory = 300 # MB
       }
       vault {
-        policies = ["particlehub-dev"]
+        policies = ["particlehub-dev", "pki-int-general"]
       }
     }
   }
