@@ -203,7 +203,6 @@ class Device:
             try:
                 self.variable_state[variable] = self.get_variable_data(variable)
             except requests.exceptions.RequestException:
-                # TODO: Log this failure somewhere
                 pass
 
     def device_health(self):

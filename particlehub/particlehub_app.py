@@ -1,4 +1,6 @@
 import os
+import logging
+import logging.handlers
 import importlib.util
 from flask import Flask, render_template, request, jsonify, make_response
 from particlehub.models import ParticleCloud, HubManager, LogStopError, LogStartError, StateNotFoundError
@@ -7,7 +9,13 @@ phconfig = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(phconfig)
 
 app = Flask(__name__)
-app.config['DEBUG'] = True
+
+phlog = logging.getLogger('particle-hub')
+phlog.setLevel(logging.INFO)
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+syslog_handler = logging.handlers.SysLogHandler(address=phconfig.syslog_host)
+syslog_handler.setFormatter(log_formatter)
+phlog.addHandler(syslog_handler)
 
 cloud = ParticleCloud(phconfig.cloud_api_token)
 
@@ -68,6 +76,7 @@ def _add_device(device_id, log_source):
     device = hub_manager.devices[device_id]
     log_credentials = phconfig.log_config[log_source]
     hub_manager.add_log_manager(device, log_source, log_credentials)
+    phlog.info("Device Added (id: %s)" % device_id)
 
 
 # TODO: remove_device nomenclature is confusing. Should be remove_log_manager or something.
@@ -80,6 +89,7 @@ def remove_device():
 
 def _remove_device(device_id):
     hub_manager.remove_log_manager(device_id)
+    phlog.info("Device and log manager removed (id: %s)" % device_id)
 
 
 @app.route('/add-tag')
@@ -100,7 +110,9 @@ def start_logging_device():
         device_id = request.args.get('id')
         _start_logging_device(device_id)
         return make_response(jsonify({"result": "success"}), 200)
-    except LogStartError:
+    except LogStartError as e:
+        phlog.error("Start logging device failed (/start-logging-device)")
+        phlog.error(e)
         return make_response(jsonify({"result": "fail"}), 200)
 
 
@@ -108,7 +120,10 @@ def _start_logging_device(device_id):
     try:
         log_manager = hub_manager.log_managers[device_id]
         log_manager.start_logging()
-    except KeyError:
+        phlog.info("Started logging device (id: %s)" % device_id)
+    except KeyError as e:
+        phlog.error("Start logging device error (_start_logging_device)")
+        phlog.error(e)
         return make_response(jsonify({"result": "fail",
                                       "message": "Log manager does not exist. Check if device is being managed"}), 200)
 
@@ -119,7 +134,9 @@ def stop_logging_device():
         device_id = request.args.get('id')
         _stop_logging_device(device_id)
         return make_response(jsonify({"result": "success"}), 200)
-    except LogStopError:
+    except LogStopError as e:
+        phlog.error("LogStopError (stop_logging_device)")
+        phlog.error(e)
         return make_response(jsonify({"result": "fail"}), 200)
 
 
@@ -127,6 +144,7 @@ def _stop_logging_device(device_id):
     try:
         log_manager = hub_manager.log_managers[device_id]
         log_manager.stop_logging()
+        phlog.info("Stopped logging device (id: %s)" % device_id)
     except KeyError:
         pass
 
@@ -137,7 +155,9 @@ def start_logging_all():
         for device_id, device in hub_manager.devices.items():
             _start_logging_device(device.id)
         return make_response(jsonify({"result": "success"}), 200)
-    except LogStartError:
+    except LogStartError as e:
+        phlog.error("LogStopError (start_logging_all)")
+        phlog.error(e)
         return make_response(jsonify({"result": "fail"}), 200)
 
 
@@ -148,9 +168,12 @@ def stop_logging_all():
         for device_id, device in hub_manager.devices.items():
             _stop_logging_device(device.id)
         return make_response(jsonify({"result": "success"}), 200)
-    except LogStopError:
+    except LogStopError as e:
+        phlog.error("LogStopError (stop_logging_all)")
+        phlog.error(e)
         return make_response(jsonify({"result": "fail"}), 200)
 
 
 if __name__ == '__main__':
+    phlog.info("Starting particle-hub")
     app.run(debug=True, host=phconfig.web_host)
