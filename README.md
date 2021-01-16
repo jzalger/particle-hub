@@ -1,6 +1,5 @@
 # particle-hub
-[![Known Vulnerabilities](https://snyk.io/test/github/jzalger/particle-hub/badge.svg?targetFile=Dockerfile)](https://snyk.io/test/github/jzalger/particle-hub?targetFile=Dockerfile)
-[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=jzalger_particle-hub)](https://sonarcloud.io/dashboard?id=jzalger_particle-hub)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=jzalger_particle-hub&metric=bugs)](https://sonarcloud.io/dashboard?id=jzalger_particle-hub)
 
 A data logging hub for the Particle IoT platform.
 
