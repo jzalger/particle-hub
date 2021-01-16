@@ -56,7 +56,7 @@ EOF
 
       template {
         data = <<EOF
-{{ with secret "pki_int/issue/server-tls" "common_name=particlehub" "ttl=30d"}}
+{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=30d"}}
 {{ .Data.certificate }}
 {{ end }}
 EOF
@@ -64,7 +64,7 @@ EOF
       }
       template {
         data = <<EOF
-{{ with secret "pki_int/issue/server-tls" "common_name=particlehub" "ttl=30d"}}
+{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=30d"}}
 {{ .Data.private_key }}
 {{ end }}
 EOF
@@ -75,7 +75,7 @@ EOF
         memory = 300 # MB
       }
       vault {
-        policies = ["particlehub-dev", "pki-int-general"]
+        policies = ["particlehub-dev"]
       }
     }
   }
