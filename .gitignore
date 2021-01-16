@@ -139,4 +139,3 @@ dmypy.json
 particle_hub.state
 
 *.nomad
-.coverage
