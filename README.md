@@ -1,4 +1,6 @@
 # particle-hub
+[![Known Vulnerabilities](https://snyk.io/test/github/jzalger/particle-hub/badge.svg?targetFile=Dockerfile)](https://snyk.io/test/github/jzalger/particle-hub?targetFile=Dockerfile)
+
 A data logging hub for the Particle IoT platform.
 
 ## Docker-compose reference

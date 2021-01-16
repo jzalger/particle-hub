@@ -137,3 +137,5 @@ dmypy.json
 .pyre/
 
 particle_hub.state
+
+*.nomad

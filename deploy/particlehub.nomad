@@ -31,13 +31,9 @@ job "particlehub" {
       }
 
       config {
-        image = "dockerhub-user/particlehub:latest"
+        image = "jzalger/particlehub:latest"
         ports = ["http"]
         volumes = ["secrets/phconfig.py:/run/secrets/phconfig.py"]
-        auth {
-          username = "dockerhub-user"
-          password = "dockerhub-password"
-        }
       }
       template {
         data = <<EOF
@@ -57,12 +53,29 @@ syslog_host = {{ .Data.data.syslog_host }}
 EOF
         destination = "secrets/phconfig.py"
       }
+
+      template {
+        data = <<EOF
+{{ with secret "pki_int/issue/server-tls" "common_name=particlehub" "ttl=30d"}}
+{{ .Data.certificate }}
+{{ end }}
+EOF
+        destination = "secrets/particlehub.crt"
+      }
+      template {
+        data = <<EOF
+{{ with secret "pki_int/issue/server-tls" "common_name=particlehub" "ttl=30d"}}
+{{ .Data.private_key }}
+{{ end }}
+EOF
+        destination = "secrets/particlehub.key"
+      }
       resources {
-        cpu    = 1000 # MHz
-        memory = 512 # MB
+        cpu    = 512 # MHz
+        memory = 300 # MB
       }
       vault {
-        policies = ["particlehub-dev"]
+        policies = ["particlehub-dev", "pki-int-general"]
       }
     }
   }
