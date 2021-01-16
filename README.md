@@ -1,5 +1,6 @@
 # particle-hub
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=jzalger_particle-hub&metric=bugs)](https://sonarcloud.io/dashboard?id=jzalger_particle-hub)
+[![codecov](https://codecov.io/gh/jzalger/particle-hub/branch/master/graph/badge.svg?token=76Y8JQG9ZC)](https://codecov.io/gh/jzalger/particle-hub)
 
 A data logging hub for the Particle IoT platform.
 
