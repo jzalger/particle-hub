@@ -7,14 +7,14 @@ job "particlehub" {
     count = 1
 
     network {
-      port "http" {
+      port "https" {
         static = 5000
       }
     }
 
     service {
       name = "particlehub"
-      port = "http"
+      port = "https"
       check {
         type     = "http"
         path     = "/"
@@ -32,13 +32,13 @@ job "particlehub" {
 
       config {
         image = "jzalger/particlehub:latest"
-        ports = ["http"]
+        ports = ["https"]
         volumes = ["secrets/phconfig.py:/run/secrets/phconfig.py"]
       }
 
       template {
         data = <<EOF
-{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=24h"}}
+{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=96h"}}
 {{ .Data.private_key }}
 {{ end }}
 EOF
@@ -47,7 +47,7 @@ EOF
 
       template {
         data = <<EOF
-{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=24h"}}
+{{ with secret "pki_int/issue/app-certificates" "common_name=particlehub" "ttl=96h"}}
 {{ .Data.certificate }}
 {{ end }}
 EOF
@@ -77,7 +77,7 @@ EOF
         memory = 300 # MB
       }
       vault {
-        policies = ["particlehub-dev", "pki-int-general"]
+        policies = ["particlehub-dev"]
       }
     }
   }
