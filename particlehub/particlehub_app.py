@@ -10,6 +10,7 @@ phconfig = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(phconfig)
 
 app = Flask(__name__)
+app.secret_key = phconfig.csrf_key
 csrf = CSRFProtect()
 csrf.init_app(app)
 
@@ -59,15 +60,15 @@ def get_device_info():
     return make_response(response, 200)
 
 
-@app.route('/add-device', methods=['GET'])
+@app.route('/add-device', methods=['POST'])
 def add_device():
-    log_source = request.args.get('log_source')
-    device_id = request.args.get('id')
+    log_source = request.form['log_source']
+    device_id = request.form['id']
     _add_device(device_id, log_source)
     return make_response("success", 200)
 
 
-@app.route('/add-unmanaged-devices', methods=['GET'])
+@app.route('/add-unmanaged-devices', methods=['POST'])
 def add_unmanaged_devices():
     for device_id, device in hub_manager.devices.items():
         if device.log_managed is not True:

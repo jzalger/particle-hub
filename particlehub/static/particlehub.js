@@ -1,8 +1,12 @@
 $(document).ready(function($){
+    $.ajaxSetup({
+            headers:
+            { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+        });
     update_device_table();
 
     $("#add-unmanaged-devices").on("click", function(){
-        $.get("/add-unmanaged-devices", function(data, status){
+        $.post("/add-unmanaged-devices", function(data, status){
             update_device_table();
         });
     });
@@ -40,7 +44,7 @@ function update_device_table() {
     $(".add-device-btn").click(function(){
         let device_id = $(this).attr('data-id');
         let log_source = $(this).attr('data-log-source');
-        $.get("/add-device", {"id": device_id, "log_source": log_source}, function(_data, _status){
+        $.post("/add-device", {"id": device_id, "log_source": log_source}, function(_data, _status){
             update_device_table();
         });
     });
