@@ -84,9 +84,9 @@ def _add_device(device_id, log_source):
 
 
 # TODO: remove_device nomenclature is confusing. Should be remove_log_manager or something.
-@app.route('/remove-device', methods=['GET'])
+@app.route('/remove-device', methods=['POST'])
 def remove_device():
-    device_id = request.args.get('id')
+    device_id = request.form['id']
     _remove_device(device_id)
     return make_response("success", 200)
 
@@ -96,10 +96,10 @@ def _remove_device(device_id):
     phlog.info("Device and log manager removed (id: %s)" % device_id)
 
 
-@app.route('/add-tag', methods=['GET'])
+@app.route('/add-tag', methods=['POST'])
 def add_tag():
-    device_id = request.args.get('id')
-    tag = request.args.get('tag')
+    device_id = request.form['id']
+    tag = request.form['tag']
     device = hub_manager.devices[device_id]
     device.tags[tag] = None
     hub_manager.save_state()
@@ -108,10 +108,10 @@ def add_tag():
 # TODO: Add a remove-tag endpoint
 
 
-@app.route('/start-logging-device', methods=['GET'])
+@app.route('/start-logging-device', methods=['POST'])
 def start_logging_device():
     try:
-        device_id = request.args.get('id')
+        device_id = request.form['id']
         _start_logging_device(device_id)
         return make_response(jsonify({"result": "success"}), 200)
     except LogStartError as e:
@@ -132,10 +132,10 @@ def _start_logging_device(device_id):
                                       "message": "Log manager does not exist. Check if device is being managed"}), 200)
 
 
-@app.route('/stop-logging-device', methods=['GET'])
+@app.route('/stop-logging-device', methods=['POST'])
 def stop_logging_device():
     try:
-        device_id = request.args.get('id')
+        device_id = request.form['id']
         _stop_logging_device(device_id)
         return make_response(jsonify({"result": "success"}), 200)
     except LogStopError as e:
@@ -153,7 +153,7 @@ def _stop_logging_device(device_id):
         pass
 
 
-@app.route('/start-logging-all', methods=['GET'])
+@app.route('/start-logging-all', methods=['POST'])
 def start_logging_all():
     try:
         for device_id, device in hub_manager.devices.items():
@@ -165,7 +165,7 @@ def start_logging_all():
         return make_response(jsonify({"result": "fail"}), 200)
 
 
-@app.route('/stop-logging-all', methods=['GET'])
+@app.route('/stop-logging-all', methods=['POST'])
 def stop_logging_all():
     print("stopping all logging")
     try:

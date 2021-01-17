@@ -12,12 +12,12 @@ $(document).ready(function($){
     });
 
     $("#start-logging-all").on("click", function(){
-        $.get("/start-logging-all", function(data, status){
+        $.post("/start-logging-all", function(data, status){
             update_device_table();
           });
     });
     $("#stop-logging-all").on("click", function(){
-        $.get("/stop-logging-all", function(data, status){
+        $.post("/stop-logging-all", function(data, status){
              update_device_table();
           });
     });
@@ -37,7 +37,7 @@ function update_device_table() {
     // Attach callbacks for add/remove
     $(".remove-device-btn").click(function(){
         let device_id = $(this).attr('data-id');
-        $.get("/remove-device", {"id": device_id}, function(_data, _status){
+        $.post("/remove-device", {"id": device_id}, function(_data, _status){
             update_device_table();
         });
     });
@@ -55,7 +55,7 @@ function attach_tagging_callbacks(){
     $(".tag-row").click(function (){
         let device_id = $(this).attr('data-id');
         let tag = $(this).attr('data-tag');
-        $.get("/add-tag", {"id": device_id, "tag": tag}, function(data, status){
+        $.post("/add-tag", {"id": device_id, "tag": tag}, function(data, status){
             let row = $("button[data-tag='" + data.tag +"']");
             $(row).append('<i class="fas fa-tag text-info"></i>');
         });
