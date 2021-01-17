@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 flask = "*"
+flask_wtf = "*"
 requests = "*"
 apscheduler = "*"
 pyyaml = "*"
@@ -13,6 +14,8 @@ simplejson = "*"
 influxdb = "*"
 
 [dev-packages]
+pytest = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.8"

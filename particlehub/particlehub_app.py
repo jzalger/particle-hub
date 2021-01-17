@@ -2,6 +2,7 @@ import os
 import logging
 import logging.handlers
 import importlib.util
+from flask_wtf import CSRFProtect
 from flask import Flask, render_template, request, jsonify, make_response
 from particlehub.models import ParticleCloud, HubManager, LogStopError, LogStartError, StateNotFoundError
 spec = importlib.util.spec_from_file_location("phconfig", os.getenv("PHCONFIG_FILE"))
@@ -9,6 +10,9 @@ phconfig = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(phconfig)
 
 app = Flask(__name__)
+app.secret_key = phconfig.csrf_key
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 phlog = logging.getLogger('particle-hub')
 phlog.setLevel(logging.INFO)
@@ -25,12 +29,12 @@ except StateNotFoundError:
     hub_manager = HubManager(phconfig.cloud_api_token)
 
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def root():
     return render_template('particlehub.html')
 
 
-@app.route('/get-devices')
+@app.route('/get-devices', methods=['GET'])
 def get_devices():
     devices = hub_manager.devices
     if devices is None:
@@ -41,13 +45,13 @@ def get_devices():
     return make_response(response, 200)
 
 
-@app.route('/refresh-all-devices')
+@app.route('/refresh-all-devices', methods=['GET'])
 def refresh_all_devices():
     hub_manager.update_device_list()
     return get_devices
 
 
-@app.route('/get-device-info')
+@app.route('/get-device-info', methods=['GET'])
 def get_device_info():
     device_id = request.args.get('id')
     device = hub_manager.devices[device_id]
@@ -56,15 +60,15 @@ def get_device_info():
     return make_response(response, 200)
 
 
-@app.route('/add-device')
+@app.route('/add-device', methods=['POST'])
 def add_device():
-    log_source = request.args.get('log_source')
-    device_id = request.args.get('id')
+    log_source = request.form['log_source']
+    device_id = request.form['id']
     _add_device(device_id, log_source)
     return make_response("success", 200)
 
 
-@app.route('/add-unmanaged-devices')
+@app.route('/add-unmanaged-devices', methods=['POST'])
 def add_unmanaged_devices():
     for device_id, device in hub_manager.devices.items():
         if device.log_managed is not True:
@@ -80,9 +84,9 @@ def _add_device(device_id, log_source):
 
 
 # TODO: remove_device nomenclature is confusing. Should be remove_log_manager or something.
-@app.route('/remove-device')
+@app.route('/remove-device', methods=['POST'])
 def remove_device():
-    device_id = request.args.get('id')
+    device_id = request.form['id']
     _remove_device(device_id)
     return make_response("success", 200)
 
@@ -92,10 +96,10 @@ def _remove_device(device_id):
     phlog.info("Device and log manager removed (id: %s)" % device_id)
 
 
-@app.route('/add-tag')
+@app.route('/add-tag', methods=['POST'])
 def add_tag():
-    device_id = request.args.get('id')
-    tag = request.args.get('tag')
+    device_id = request.form['id']
+    tag = request.form['tag']
     device = hub_manager.devices[device_id]
     device.tags[tag] = None
     hub_manager.save_state()
@@ -104,10 +108,10 @@ def add_tag():
 # TODO: Add a remove-tag endpoint
 
 
-@app.route('/start-logging-device')
+@app.route('/start-logging-device', methods=['POST'])
 def start_logging_device():
     try:
-        device_id = request.args.get('id')
+        device_id = request.form['id']
         _start_logging_device(device_id)
         return make_response(jsonify({"result": "success"}), 200)
     except LogStartError as e:
@@ -128,10 +132,10 @@ def _start_logging_device(device_id):
                                       "message": "Log manager does not exist. Check if device is being managed"}), 200)
 
 
-@app.route('/stop-logging-device')
+@app.route('/stop-logging-device', methods=['POST'])
 def stop_logging_device():
     try:
-        device_id = request.args.get('id')
+        device_id = request.form['id']
         _stop_logging_device(device_id)
         return make_response(jsonify({"result": "success"}), 200)
     except LogStopError as e:
@@ -149,7 +153,7 @@ def _stop_logging_device(device_id):
         pass
 
 
-@app.route('/start-logging-all')
+@app.route('/start-logging-all', methods=['POST'])
 def start_logging_all():
     try:
         for device_id, device in hub_manager.devices.items():
@@ -161,7 +165,7 @@ def start_logging_all():
         return make_response(jsonify({"result": "fail"}), 200)
 
 
-@app.route('/stop-logging-all')
+@app.route('/stop-logging-all', methods=['POST'])
 def stop_logging_all():
     print("stopping all logging")
     try:

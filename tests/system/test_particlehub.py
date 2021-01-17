@@ -8,3 +8,6 @@ class TestParticleHubApp(BaseTest):
             response = client.get('/')
             self.assertEqual(response.status_code, 200)
 
+    def test_add_device(self):
+        # TODO: test CSRF !
+        self.fail()

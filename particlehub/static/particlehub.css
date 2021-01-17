@@ -1,9 +1,9 @@
 body {
     background-color: #495F75 !important;
-    font-family: "Raleway";
+    font-family: Raleway, sans-serif;
 }
 .navbar {
-    font-family: "Quicksand";
+    font-family: Quicksand, sans-serif;
 }
 .container {
     padding-bottom:30px;
