@@ -24,11 +24,12 @@ phlog.addHandler(syslog_handler)
 models.phlog = phlog
 
 cloud = models.ParticleCloud(phconfig.cloud_api_token)
+hub_manager = models.HubManager(phconfig.cloud_api_token)
 
-try:
-    hub_manager = models.HubManager.from_state_file(phconfig.cloud_api_token)
-except models.StateNotFoundError:
-    hub_manager = models.HubManager(phconfig.cloud_api_token)
+# try:
+#     hub_manager = models.HubManager.from_state_file(phconfig.cloud_api_token)
+# except models.StateNotFoundError:
+#     hub_manager = models.HubManager(phconfig.cloud_api_token)
 
 
 @app.route('/', methods=['GET'])
@@ -85,15 +86,14 @@ def _add_device(device_id, log_source):
     phlog.info("Device Added (id: %s)" % device_id)
 
 
-# TODO: remove_device nomenclature is confusing. Should be remove_log_manager or something.
 @app.route('/remove-device', methods=['POST'])
-def remove_device():
+def remove_log_manager():
     device_id = request.form['id']
-    _remove_device(device_id)
+    _remove_log_manager(device_id)
     return make_response("success", 200)
 
 
-def _remove_device(device_id):
+def _remove_log_manager(device_id):
     hub_manager.remove_log_manager(device_id)
     phlog.info("Device and log manager removed (id: %s)" % device_id)
 

@@ -98,10 +98,10 @@ class HubManager:
     def save_state(self):
         """Save the current app state to disk as a pickle file."""
         # FIXME: State saving fails when object includes an AuthenticationString
-        return
-        state = dict(devices=self.devices, log_managers=self.log_managers)
-        with open(self.state_filename, "wb") as state_file:
-            pickle.dump(state, state_file)
+        pass
+        # state = dict(devices=self.devices, log_managers=self.log_managers)
+        # with open(self.state_filename, "wb") as state_file:
+        #     pickle.dump(state, state_file)
 
 
 class LogManager:
@@ -116,6 +116,8 @@ class LogManager:
         self.process = None
 
     def start_logging(self):
+        if self.device.online is False:
+            raise LogStartError("Device offline")
         self.is_logging = True
         self.device.is_logging = True
         self.process = multiprocessing.Process(target=self.log_loop)
@@ -234,8 +236,6 @@ class Device:
             return dict()
         val = send_get_request(url=Device.API_GET_URL.substitute(dict(id=self.id, var_name=var)),
                                params=dict(access_token=self.cloud_api_token))
-
-        # FIXME: Sometimes val is None. Write a test to handle this.
         if val is not None:
             return val["result"]
         else:
