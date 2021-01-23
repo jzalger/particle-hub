@@ -4,7 +4,8 @@ import logging.handlers
 import importlib.util
 from flask_wtf import CSRFProtect
 from flask import Flask, render_template, request, jsonify, make_response
-from particlehub.models import ParticleCloud, HubManager, LogStopError, LogStartError, StateNotFoundError
+from particlehub import models
+
 spec = importlib.util.spec_from_file_location("phconfig", os.getenv("PHCONFIG_FILE"))
 phconfig = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(phconfig)
@@ -20,13 +21,15 @@ log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(me
 syslog_handler = logging.handlers.SysLogHandler(address=phconfig.syslog_host)
 syslog_handler.setFormatter(log_formatter)
 phlog.addHandler(syslog_handler)
+models.phlog = phlog
 
-cloud = ParticleCloud(phconfig.cloud_api_token)
+cloud = models.ParticleCloud(phconfig.cloud_api_token)
+hub_manager = models.HubManager(phconfig.cloud_api_token)
 
-try:
-    hub_manager = HubManager.from_state_file(phconfig.cloud_api_token)
-except StateNotFoundError:
-    hub_manager = HubManager(phconfig.cloud_api_token)
+# try:
+#     hub_manager = models.HubManager.from_state_file(phconfig.cloud_api_token)
+# except models.StateNotFoundError:
+#     hub_manager = models.HubManager(phconfig.cloud_api_token)
 
 
 @app.route('/', methods=['GET'])
@@ -83,15 +86,14 @@ def _add_device(device_id, log_source):
     phlog.info("Device Added (id: %s)" % device_id)
 
 
-# TODO: remove_device nomenclature is confusing. Should be remove_log_manager or something.
 @app.route('/remove-device', methods=['POST'])
-def remove_device():
+def remove_log_manager():
     device_id = request.form['id']
-    _remove_device(device_id)
+    _remove_log_manager(device_id)
     return make_response("success", 200)
 
 
-def _remove_device(device_id):
+def _remove_log_manager(device_id):
     hub_manager.remove_log_manager(device_id)
     phlog.info("Device and log manager removed (id: %s)" % device_id)
 
@@ -114,7 +116,7 @@ def start_logging_device():
         device_id = request.form['id']
         _start_logging_device(device_id)
         return make_response(jsonify({"result": "success"}), 200)
-    except LogStartError as e:
+    except models.LogStartError as e:
         phlog.error("Start logging device failed (/start-logging-device)")
         phlog.error(e)
         return make_response(jsonify({"result": "fail"}), 200)
@@ -138,7 +140,7 @@ def stop_logging_device():
         device_id = request.form['id']
         _stop_logging_device(device_id)
         return make_response(jsonify({"result": "success"}), 200)
-    except LogStopError as e:
+    except models.LogStopError as e:
         phlog.error("LogStopError (stop_logging_device)")
         phlog.error(e)
         return make_response(jsonify({"result": "fail"}), 200)
@@ -159,7 +161,7 @@ def start_logging_all():
         for device_id, device in hub_manager.devices.items():
             _start_logging_device(device.id)
         return make_response(jsonify({"result": "success"}), 200)
-    except LogStartError as e:
+    except models.LogStartError as e:
         phlog.error("LogStopError (start_logging_all)")
         phlog.error(e)
         return make_response(jsonify({"result": "fail"}), 200)
@@ -172,7 +174,7 @@ def stop_logging_all():
         for device_id, device in hub_manager.devices.items():
             _stop_logging_device(device.id)
         return make_response(jsonify({"result": "success"}), 200)
-    except LogStopError as e:
+    except models.LogStopError as e:
         phlog.error("LogStopError (stop_logging_all)")
         phlog.error(e)
         return make_response(jsonify({"result": "fail"}), 200)

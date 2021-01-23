@@ -1,6 +1,7 @@
 import time
 import pickle
 import requests
+import logging
 import multiprocessing
 import simplejson as json
 from string import Template
@@ -8,6 +9,7 @@ from influxdb import InfluxDBClient
 from influxdb.exceptions import InfluxDBClientError, InfluxDBServerError
 
 BASE_PARTICLE_URL = "https://api.particle.io/v1/"
+phlog = logging.getLogger("particle-hub.models")
 
 
 ###################################################################################################
@@ -29,6 +31,9 @@ class ParticleCloud:
                 devices[device.id] = device
             return devices
         else:
+            if phlog:
+                phlog.error("Cloud Communication error in get_devices")
+                phlog.debug(request)
             raise CloudCommunicationError
 
 
@@ -92,9 +97,11 @@ class HubManager:
 
     def save_state(self):
         """Save the current app state to disk as a pickle file."""
-        state = dict(devices=self.devices, log_managers=self.log_managers)
-        with open(self.state_filename, "wb") as state_file:
-            pickle.dump(state, state_file)
+        # FIXME: State saving fails when object includes an AuthenticationString
+        pass
+        # state = dict(devices=self.devices, log_managers=self.log_managers)
+        # with open(self.state_filename, "wb") as state_file:
+        #     pickle.dump(state, state_file)
 
 
 class LogManager:
@@ -109,6 +116,8 @@ class LogManager:
         self.process = None
 
     def start_logging(self):
+        if self.device.online is False:
+            raise LogStartError("Device offline")
         self.is_logging = True
         self.device.is_logging = True
         self.process = multiprocessing.Process(target=self.log_loop)
@@ -145,10 +154,12 @@ def _log_to_influx(data, log_credentials=None, tags=None):
         try:
             client = InfluxDBClient(**log_credentials)
             client.write_points(point)
-        except InfluxDBClientError:
-            print("InfluxDBClientError")
-        except InfluxDBServerError:
-            print("InfluxDBServerError")
+        except InfluxDBClientError as e:
+            phlog.error("InfluxDBClientError")
+            phlog.debug(e)
+        except InfluxDBServerError as e:
+            phlog.error("InfluxDBServerError")
+            phlog.debug(e)
 
 
 log_functions = dict(influx=_log_to_influx)
@@ -225,7 +236,12 @@ class Device:
             return dict()
         val = send_get_request(url=Device.API_GET_URL.substitute(dict(id=self.id, var_name=var)),
                                params=dict(access_token=self.cloud_api_token))
-        return val["result"]
+        if val is not None:
+            return val["result"]
+        else:
+            phlog.warning("get_variable_data returned None or failed")
+            phlog.debug(val)
+            return None
 
     def _call_func(self, func_name, arg):
         result = send_post_request(url=Device.API_FUNC_URL.substitute(
@@ -246,6 +262,9 @@ def send_get_request(url, params, except_return=None):
         else:
             return None
     except requests.exceptions.RequestException:
+        phlog.error("send_get_request RequestException")
+        phlog.debug(url)
+        phlog.debug(params)
         return except_return
 
 
@@ -257,6 +276,9 @@ def send_post_request(url, data, except_return=False):
         else:
             return False
     except requests.exceptions.RequestException:
+        phlog.error("send_post_request RequestException")
+        phlog.debug(url)
+        phlog.debug(data)
         return except_return
 
 
