@@ -1,5 +1,6 @@
 import os
-import logging
+import sys
+import signal
 import logging.handlers
 import importlib.util
 from flask_wtf import CSRFProtect
@@ -26,10 +27,14 @@ models.phlog = phlog
 cloud = models.ParticleCloud(phconfig.cloud_api_token)
 hub_manager = models.HubManager(phconfig.cloud_api_token)
 
-# try:
-#     hub_manager = models.HubManager.from_state_file(phconfig.cloud_api_token)
-# except models.StateNotFoundError:
-#     hub_manager = models.HubManager(phconfig.cloud_api_token)
+
+def stop_signal_handler(signum, frame):
+    phlog.info("Exiting")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, stop_signal_handler)
+signal.signal(signal.SIGTERM, stop_signal_handler)
 
 
 @app.route('/', methods=['GET'])
