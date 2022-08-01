@@ -1,8 +1,7 @@
-import time
 import pickle
 import requests
+import sseclient
 import logging
-import multiprocessing
 import simplejson as json
 from string import Template
 from influxdb import InfluxDBClient
@@ -39,26 +38,20 @@ class ParticleCloud:
 
 class HubManager:
 
-    def __init__(self, cloud_api_token, devices=None, log_managers=None, state_filename="particle_hub.state"):
-        self.cloud = ParticleCloud(cloud_api_token)
+    def __init__(self, cloud_api, stream_config, event_callbacks, log_dest, log_credentials, devices=None, managed_devices=None):
+        self.event_callbacks = event_callbacks
+        self.cloud = cloud_api
         self.devices = devices
-        self.state_filename = state_filename
-        self.log_managers = log_managers
-
+        
+        # TODO: may need to manage state for managed devices
+        self.managed_devices = managed_devices
+        
         self.update_device_list()
-
-        if log_managers is None:
-            self.log_managers = dict()
-
-    @classmethod
-    def from_state_file(cls, cloud_api_token, state_filename="particle_hub.state"):
-        state = HubManager._return_state(state_filename)
-        if state is None:
-            raise StateNotFoundError
-        else:
-            return cls(cloud_api_token, devices=state["devices"],
-                       log_managers=state["log_managers"], state_filename=state_filename)
-
+        
+        self.stream_manager = StreamManager(stream_config, event_callbacks, log_dest, log_credentials)
+        self.stream_manager.managed_devices = managed_devices
+        self.stream_manager.start_stream()
+        
     def update_device_list(self):
         try:
             new_devices = self.cloud.get_devices()
@@ -67,82 +60,109 @@ class HubManager:
                     if device in new_devices:
                         new_devices[device].tags = self.devices[device].tags
             self.devices = new_devices
-            self.save_state()
         except CloudCommunicationError:
             self.devices = None
-
-    def add_log_manager(self, device, log_source, log_credentials):
-        device.log_managed = True
-        manager = LogManager(device, log_source=log_source, log_credentials=log_credentials)
-        self.log_managers[device.id] = manager
-        self.save_state()
-
-    def remove_log_manager(self, device_id):
-        log_manager = self.log_managers[device_id]
+            
+    def update_device_data(self, device_id):
+        """
+            Enables manual device update from UI
+        """
         device = self.devices[device_id]
-        device.log_managed = False
-        log_manager.stop_logging()  # Call stop here to make sure threads are killed.
-        del self.log_managers[device_id]
-        self.save_state()
+        device.get_all_variable_data()
+        for callback in self.event_callbacks:
+            callback(device.variable_state)
+            
+    def add_device(self, device_id):
+        device = self.devices[device_id]
+        device.is_managed = True
+        self.managed_devices[device_id] = device
+        self.stream_manager.managed_devices = self.managed_devices
+        
+    def remove_device(self, device_id):
+        device = self.devices[device_id]
+        device.is_managed = False
+        del self.managed_devices[device_id]
+        self.stream_manager.managed_devices = self.managed_devices
+        
+    def save_managed_device_state(self, state_filename='state.pkl'):
+        with open(state_filename, 'wb') as state_file:
+            pickle.dump(self.managed_devices, state_file)
+        
+    def load_managed_device_state(self, state_filename='state.pkl'):
+        with open(state_filename, 'rb') as state_file:
+            self.managed_devices = pickle.load(state_file)
 
-    @staticmethod
-    def _return_state(state_filename):
-        """Load the previous program state from a pickle file"""
-        try:
-            with open(state_filename, "rb") as state_file:
-                state = pickle.load(state_file)
-            return state
-        except FileNotFoundError:
-            return None
 
-    def save_state(self):
-        """Save the current app state to disk as a pickle file."""
-        # FIXME: State saving fails when object includes an AuthenticationString
-        pass
-        # state = dict(devices=self.devices, log_managers=self.log_managers)
-        # with open(self.state_filename, "wb") as state_file:
-        #     pickle.dump(state, state_file)
-
-
-class LogManager:
-
-    def __init__(self, device, log_source="influx", log_credentials=None, log_interval=300):
-        self.device = device
-        self.log_source = log_source
+class StreamManager (object):
+    
+    def __init__(self, stream_config, callbacks, log_dest=None, log_credentials=None, managed_devices=None, subscribed_events=["LOG", "ERROR", "DATA"]):
+        """
+            stream_config (dict):      url, syntax_template, headers
+            log_dest (str):            string defining the log database to use
+            log_credentials (dict):    DB credentials
+            callbacks (list):          [func1, func2]
+            managed_devices (list):    List of device objects to log [device1, device2]
+            subscribed_events (list):  List of Particle Publish event names to respond to 
+        """        
+        self.stream_config = stream_config
+        self.callbacks = callbacks
+        self.managed_devices = managed_devices
         self.log_credentials = log_credentials
-        self.is_logging = False
-        self.log_interval = log_interval
-        self.log_function = log_functions[log_source]
-        self.process = None
-
-    def start_logging(self):
-        if self.device.online is False:
-            raise LogStartError("Device offline")
-        self.is_logging = True
-        self.device.is_logging = True
-        self.process = multiprocessing.Process(target=self.log_loop)
-        self.process.start()
-
-    def stop_logging(self):
-        self.is_logging = False
-        self.device.is_logging = False
-        try:
-            self.process.log = False
-            self.process.terminate()
-            self.process.join()
-        except AttributeError:
-            pass
-
-    def log_loop(self):
-        process = multiprocessing.current_process()
-        while getattr(process, "log", True):
-            self.device.get_all_variable_data()
-            self.log_function(data=self.device.variable_state,
-                              log_credentials=self.log_credentials,
-                              tags=self.device.tags)
-            time.sleep(self.log_interval)
-
-
+        self.subscribed_events = subscribed_events
+        self.event_handlers = dict(LOG=self._handle_log, ERROR=self._handle_error, DATA=self._handle_data)
+        
+        if log_dest is not None:
+            self.log_function = log_functions[log_dest]
+            self.db_logging = True
+        else:
+            self.log_function = None
+            self.db_logging = False
+         
+    def start_stream(self):
+        response = requests.get(self.stream_config.url, stream=True, headers=self.stream_config.headers)
+        stream = sseclient.SSEClient(response)
+        for event in stream.events():
+            self._handle_msg(event)
+        
+    def _handle_msg(self, event):
+        event_data = dict(json.reads(event.data)) # Parses the top level Particle.IO structure
+        event_name = event.name
+        if event_data['deviceid'] in self.managed_devices.keys():
+            if event.name in self.subscribed_events:
+                device = self.managed_devices[event_data['deviceid']]
+                handler = self.event_handlers[event_name]
+                handler(event_data, device)
+                for callback in self.callbacks:  # Other system callbacks
+                    callback(event)    
+                
+    # Specific message handlers
+    def _handle_data(self, data, device):
+        """
+        data (dict)        full event data dict
+        device (Device)    device object
+        
+        Event Syntax:
+        event: motion-detected
+        data: {"data":"PUBLISHED DATA FIELD","ttl":"60","published_at":"2014-05-28T19:20:34.638Z","deviceid":"0123456789abcdef"}
+        
+        ParticleHub Schema: "key1=val1,key2=val2"
+        """
+        device_data_pairs = data['data'].split(",")
+        device_data = {pair[0]:pair[1] for pair in device_data_pairs}
+        device_data['timestamp'] = data['published_at']
+        
+        if self.db_logging:
+            self.log_function(device_data, self.log_credentials, device.tags)
+        
+            
+    def _handle_log(self, data, device):
+        if self.db_logging:
+            self.log_function({"LOG":data['data']}, self.log_credentials, device.tags)
+        
+    def _handle_error(self, data, device):
+        if self.db_logging:
+            self.log_function({"ERROR":data['data']}, self.log_credentials, device.tags)
+         
 ###################################################################################################
 # Log Functions
 
@@ -161,9 +181,21 @@ def _log_to_influx(data, log_credentials=None, tags=None):
             phlog.error("InfluxDBServerError")
             phlog.debug(e)
 
+def _query_influx(log_credentials, tags=dict(), n_items=10):
+    try:
+        client = InfluxDBClient(**log_credentials)
+        results = client.query('SELECT * FROM %s limit %d', log_credentials.db_name, n_items)
+        points = results.get_points(tags=tags)
+        return list(points) # FIXME: this is probably a list of ficts
+    except InfluxDBClientError as e:
+        phlog.error("InfluxDBClientError")
+        phlog.debug(e)
+    except InfluxDBServerError as e:
+        phlog.error("InfluxDBServerError")
+        phlog.debug(e)
 
 log_functions = dict(influx=_log_to_influx)
-
+log_query_functions = dict(influx=_query_influx)
 
 ###################################################################################################
 # Device Classes
@@ -188,7 +220,7 @@ class Device:
         self.connected = connected
         self.online = online
         self.status = status
-        self.is_logging = False
+        self.is_managed = False
 
         if variable_state is None:
             self.variable_state = dict()
