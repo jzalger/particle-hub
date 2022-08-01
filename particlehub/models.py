@@ -38,20 +38,23 @@ class ParticleCloud:
 
 class HubManager:
 
-    def __init__(self, cloud_api, stream_config, event_callbacks, log_dest, log_credentials, devices=None, managed_devices=None):
+    def __init__(self, cloud_api, stream_config, event_callbacks, log_dest, log_credentials, devices=None,
+                 managed_devices=None):
         self.event_callbacks = event_callbacks
         self.cloud = cloud_api
         self.devices = devices
-        
+
         # TODO: may need to manage state for managed devices
         self.managed_devices = managed_devices
-        
+        if managed_devices is None:
+            self.managed_devices = dict()
+
         self.update_device_list()
-        
-        self.stream_manager = StreamManager(stream_config, event_callbacks, log_dest, log_credentials)
-        self.stream_manager.managed_devices = managed_devices
+
+        self.stream_manager = StreamManager(stream_config, event_callbacks, log_dest, log_credentials,
+                                            managed_devices=self.managed_devices)
         self.stream_manager.start_stream()
-        
+
     def update_device_list(self):
         try:
             new_devices = self.cloud.get_devices()
@@ -62,7 +65,7 @@ class HubManager:
             self.devices = new_devices
         except CloudCommunicationError:
             self.devices = None
-            
+
     def update_device_data(self, device_id):
         """
             Enables manual device update from UI
@@ -71,71 +74,71 @@ class HubManager:
         device.get_all_variable_data()
         for callback in self.event_callbacks:
             callback(device.variable_state)
-            
+
     def add_device(self, device_id):
         device = self.devices[device_id]
         device.is_managed = True
         self.managed_devices[device_id] = device
         self.stream_manager.managed_devices = self.managed_devices
-        
+
     def remove_device(self, device_id):
         device = self.devices[device_id]
         device.is_managed = False
         del self.managed_devices[device_id]
         self.stream_manager.managed_devices = self.managed_devices
-        
+
     def save_managed_device_state(self, state_filename='state.pkl'):
         with open(state_filename, 'wb') as state_file:
             pickle.dump(self.managed_devices, state_file)
-        
+
     def load_managed_device_state(self, state_filename='state.pkl'):
         with open(state_filename, 'rb') as state_file:
             self.managed_devices = pickle.load(state_file)
 
 
-class StreamManager (object):
-    
-    def __init__(self, stream_config, callbacks, log_dest=None, log_credentials=None, managed_devices=None, subscribed_events=["LOG", "ERROR", "DATA"]):
+class StreamManager(object):
+
+    def __init__(self, stream_config, callbacks, log_dest=None, log_credentials=None, managed_devices=None,
+                 subscribed_events=None):
         """
-            stream_config (dict):      url, syntax_template, headers
+            stream_config (dict):      url, headers
             log_dest (str):            string defining the log database to use
             log_credentials (dict):    DB credentials
             callbacks (list):          [func1, func2]
             managed_devices (list):    List of device objects to log [device1, device2]
             subscribed_events (list):  List of Particle Publish event names to respond to 
-        """        
+        """
         self.stream_config = stream_config
         self.callbacks = callbacks
         self.managed_devices = managed_devices
         self.log_credentials = log_credentials
-        self.subscribed_events = subscribed_events
         self.event_handlers = dict(LOG=self._handle_log, ERROR=self._handle_error, DATA=self._handle_data)
-        
+        if subscribed_events is None:
+            self.subscribed_events = ["LOG", "DATA", "ERROR"]
+
         if log_dest is not None:
             self.log_function = log_functions[log_dest]
             self.db_logging = True
         else:
             self.log_function = None
             self.db_logging = False
-         
+
     def start_stream(self):
-        response = requests.get(self.stream_config.url, stream=True, headers=self.stream_config.headers)
-        stream = sseclient.SSEClient(response)
-        for event in stream.events():
-            self._handle_msg(event)
-        
+        stream = sseclient.SSEClient(self.stream_config["url"])
+        for event in stream:
+            if event.data != "":
+                self._handle_msg(event)
+
     def _handle_msg(self, event):
-        event_data = dict(json.reads(event.data)) # Parses the top level Particle.IO structure
-        event_name = event.name
-        if event_data['deviceid'] in self.managed_devices.keys():
-            if event.name in self.subscribed_events:
-                device = self.managed_devices[event_data['deviceid']]
-                handler = self.event_handlers[event_name]
-                handler(event_data, device)
-                for callback in self.callbacks:  # Other system callbacks
-                    callback(event)    
-                
-    # Specific message handlers
+        event_data = dict(json.loads(event.data))  # Parses the top level Particle.IO structure
+        event_name = event.event
+        if event_data['coreid'] in self.managed_devices.keys() and event_name in self.subscribed_events:
+            device = self.managed_devices[event_data['coreid']]
+            handler = self.event_handlers[event_name]
+            handler(event_data, device)
+            for callback in self.callbacks:  # Other system callbacks
+                callback(event)
+
     def _handle_data(self, data, device):
         """
         data (dict)        full event data dict
@@ -148,21 +151,21 @@ class StreamManager (object):
         ParticleHub Schema: "key1=val1,key2=val2"
         """
         device_data_pairs = data['data'].split(",")
-        device_data = {pair[0]:pair[1] for pair in device_data_pairs}
+        device_data = {pair[0]: pair[1] for pair in device_data_pairs}
         device_data['timestamp'] = data['published_at']
-        
+
         if self.db_logging:
             self.log_function(device_data, self.log_credentials, device.tags)
-        
-            
+
     def _handle_log(self, data, device):
         if self.db_logging:
-            self.log_function({"LOG":data['data']}, self.log_credentials, device.tags)
-        
+            self.log_function({"LOG": data['data']}, self.log_credentials, device.tags)
+
     def _handle_error(self, data, device):
         if self.db_logging:
-            self.log_function({"ERROR":data['data']}, self.log_credentials, device.tags)
-         
+            self.log_function({"ERROR": data['data']}, self.log_credentials, device.tags)
+
+
 ###################################################################################################
 # Log Functions
 
@@ -181,12 +184,15 @@ def _log_to_influx(data, log_credentials=None, tags=None):
             phlog.error("InfluxDBServerError")
             phlog.debug(e)
 
-def _query_influx(log_credentials, tags=dict(), n_items=10):
+
+def _query_influx(log_credentials, tags=None, n_items=10):
     try:
+        if tags is None:
+            tags = dict()
         client = InfluxDBClient(**log_credentials)
-        results = client.query('SELECT * FROM %s limit %d', log_credentials.db_name, n_items)
+        results = client.query('SELECT * FROM %s limit %d' % (log_credentials.db_name, n_items))
         points = results.get_points(tags=tags)
-        return list(points) # FIXME: this is probably a list of ficts
+        return list(points)  # TODO: Check me: this is probably a list of dicts
     except InfluxDBClientError as e:
         phlog.error("InfluxDBClientError")
         phlog.debug(e)
@@ -194,8 +200,10 @@ def _query_influx(log_credentials, tags=dict(), n_items=10):
         phlog.error("InfluxDBServerError")
         phlog.debug(e)
 
+
 log_functions = dict(influx=_log_to_influx)
 log_query_functions = dict(influx=_query_influx)
+
 
 ###################################################################################################
 # Device Classes

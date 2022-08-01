@@ -118,10 +118,9 @@ def update_console(n_events=10):
     html_table = ""
     for point in points:
         row = "<tr><td>%s</td><td>" % point["time"]
-        for point in points:
-            for k,v in point.iteritems():
-                if k != "time":
-                    row += "%s: %s" % k, v
+        for k, v in point.iteritems():
+            if k != "time":
+                row += "%s: %s" % k, v
         row += "</td></tr>"
         html_table += row
     html_end = """    
