@@ -44,21 +44,17 @@ class HubManager:
         self.event_callbacks = event_callbacks
         self.cloud = cloud_api
         self.devices = devices
-
-        # TODO: may need to manage state for managed devices
         self.managed_devices = managed_devices
         if managed_devices is None:
             self.managed_devices = dict()
-
         self.update_device_list()
-
-        self.managed_devices = self.devices # FIXME:
-
         self.stream_manager = StreamManager(stream_config, event_callbacks, log_dest, log_credentials,
                                             managed_devices=self.managed_devices)
         self.stream_manager.start_stream()
 
     def update_device_list(self):
+        # TODO: This needs to be more sophistocated to not overwrite existing device objects that may be modified.
+        # Need to add devices that dont exist, and update meta data for existing objects
         try:
             new_devices = self.cloud.get_devices()
             if self.devices is not None:
@@ -160,7 +156,9 @@ class StreamManager(object):
         
         ParticleHub Schema: "key1=val1,key2=val2"
         """
+        # TODO: Wrap this in a try statement to handle messages other than key value pairs
         device_data_pairs = data['data'].split(",")
+        device_data_pairs = [pair.split("=") for pair in device_data_pairs]
         device_data = {pair[0]: pair[1] for pair in device_data_pairs}
         device_data['timestamp'] = data['published_at']
 
@@ -168,10 +166,18 @@ class StreamManager(object):
             self.log_function(device_data, self.log_credentials, device.tags)
 
     def _handle_log(self, data, device):
+        """
+        data (dict)
+        device (Device)
+        """
         if self.db_logging:
             self.log_function({"LOG": data['data']}, self.log_credentials, device.tags)
 
     def _handle_error(self, data, device):
+        """
+        data (dict)
+        device (Device)
+        """
         if self.db_logging:
             self.log_function({"ERROR": data['data']}, self.log_credentials, device.tags)
 
@@ -200,7 +206,7 @@ def _query_influx(log_credentials, tags=None, n_items=10):
         if tags is None:
             tags = dict()
         client = InfluxDBClient(**log_credentials)
-        results = client.query('SELECT * FROM %s limit %d' % (log_credentials.db_name, n_items))
+        results = client.query('SELECT * FROM %s limit %d' % (log_credentials['database'], n_items))
         points = results.get_points(tags=tags)
         return list(points)  # TODO: Check me: this is probably a list of dicts
     except InfluxDBClientError as e:
@@ -226,9 +232,8 @@ class Device:
     API_VITALS_URL = Template(BASE_PARTICLE_URL + "diagnostics/$id/last")
 
     def __init__(self, device_id, cloud_api_token, name=None, tags=None, variables=None, variable_state=None,
-                 notes=None, connected=None, online=None, status=None, log_managed=False):
+                 notes=None, connected=None, online=None, status=None, is_managed=False):
         self.id = device_id
-        self.log_managed = log_managed
         self.cloud_api_token = cloud_api_token
         self.name = name
         self.tags = tags
@@ -238,7 +243,7 @@ class Device:
         self.connected = connected
         self.online = online
         self.status = status
-        self.is_managed = False
+        self.is_managed = is_managed
 
         if variable_state is None:
             self.variable_state = dict()

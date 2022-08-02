@@ -37,8 +37,7 @@
                         <button type="button" data-tag="{{ variable }}" data-id="{{ device_info.id }}"
                                 class="list-group-item list-group-item-action tag-row">{{ variable }}
                             {% if variable in device_info.tags %}
-                                <!-- FIXME: Broken with FA update -->
-                                <i class="fas fa-tag text-info"></i>
+                                <em class="fa fa-tag text-info"></em>
                             {% endif %}
                         </button>
                         {% endfor %}

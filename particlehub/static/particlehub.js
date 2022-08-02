@@ -14,7 +14,7 @@ $(document).ready(function($){
     // Initialize log console
     $.get("/update-console", function(data, status){
             // Format on server side and display
-            ("#log-console").html(data);
+            $("#log-console").html(data);
         })
 });
 function update_device_table() {
@@ -53,7 +53,7 @@ function attach_tagging_callbacks(){
         $.post("/add-tag", {"id": device_id, "tag": tag}, function(data, status){
             let row = $("button[data-tag='" + data.tag +"']");
             // FIXME: fa-tag link broken with font awesome upgrade
-            $(row).append('<i class="fas fa-tag text-info"></i>');
+            $(row).append('<i class="fa fa-tag text-info"></i>');
         });
     });
 }

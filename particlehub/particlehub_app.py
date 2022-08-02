@@ -39,7 +39,8 @@ signal.signal(signal.SIGTERM, stop_signal_handler)
 
 @app.route('/', methods=['GET'])
 def root():
-    refresh_all_devices()
+    # FIXME: Refreshing overwrites the device list, and any updates to each device, like is_managed
+    # refresh_all_devices()
     return render_template('particlehub.html')
 
 
@@ -134,8 +135,8 @@ def update_console(n_events=10):
 def stream_event_handler(event):
     update_console()
 
-
-event_callbacks = [stream_event_handler]  # Any additional callbacks after logging to DB
+# FIXME: Since the callback is triggered from another thread, it cannot call back directly to flask
+event_callbacks = list()
 cloud = models.ParticleCloud(phconfig.cloud_api_token)
 hub_manager = models.HubManager(cloud, phconfig.stream_config, event_callbacks, db_log_dest, db_log_credentials)
 
