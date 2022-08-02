@@ -1,7 +1,8 @@
 import pickle
+import logging
 import requests
 import sseclient
-import logging
+import threading
 import simplejson as json
 from string import Template
 from influxdb import InfluxDBClient
@@ -50,6 +51,8 @@ class HubManager:
             self.managed_devices = dict()
 
         self.update_device_list()
+
+        self.managed_devices = self.devices # FIXME:
 
         self.stream_manager = StreamManager(stream_config, event_callbacks, log_dest, log_credentials,
                                             managed_devices=self.managed_devices)
@@ -105,7 +108,7 @@ class StreamManager(object):
             log_dest (str):            string defining the log database to use
             log_credentials (dict):    DB credentials
             callbacks (list):          [func1, func2]
-            managed_devices (list):    List of device objects to log [device1, device2]
+            managed_devices (dict):    List of device objects to log [id1:device1, id2:device2]
             subscribed_events (list):  List of Particle Publish event names to respond to 
         """
         self.stream_config = stream_config
@@ -115,7 +118,6 @@ class StreamManager(object):
         self.event_handlers = dict(LOG=self._handle_log, ERROR=self._handle_error, DATA=self._handle_data)
         if subscribed_events is None:
             self.subscribed_events = ["LOG", "DATA", "ERROR"]
-
         if log_dest is not None:
             self.log_function = log_functions[log_dest]
             self.db_logging = True
@@ -123,7 +125,15 @@ class StreamManager(object):
             self.log_function = None
             self.db_logging = False
 
+        self.stream_thread = threading.Thread(target=self._start_stream, name="PHStreamThread")
+
     def start_stream(self):
+        self.stream_thread.start()
+
+    def stop_stream(self):
+        self.stream_thread.join(timeout=1)
+
+    def _start_stream(self):
         stream = sseclient.SSEClient(self.stream_config["url"])
         for event in stream:
             if event.data != "":
