@@ -39,7 +39,6 @@ signal.signal(signal.SIGTERM, stop_signal_handler)
 
 @app.route('/', methods=['GET'])
 def root():
-    # FIXME: Refreshing overwrites the device list, and any updates to each device, like is_managed
     # refresh_all_devices()
     return render_template('particlehub.html')
 
@@ -106,11 +105,23 @@ def _remove_device(device_id):
 def add_tag():
     device_id = request.form['id']
     tag = request.form['tag']
-    hub_manager.add_tag(device_id, tag)
-    return make_response(jsonify(dict(status="success", tag=tag)), 200)
+    success = hub_manager.add_tag(device_id, tag)
+    if success is True:
+        return make_response(jsonify(dict(status="success", tag=tag)), 200)
+    else:
+        return make_response(jsonify(dict(status="fail", tag=tag)), 200)
 
 
-# TODO: need remove tag endpoint
+@app.route('/remove-tag', methods=['POST'])
+def remove_tag():
+    device_id = request.form['id']
+    tag = request.form['tag']
+    success = hub_manager.remove_tag(device_id, tag)
+    if success is True:
+        return make_response(jsonify(dict(status="success", tag=tag)), 200)
+    else:
+        return make_response(jsonify(dict(status="fail", tag=tag)), 200)
+
 
 event_callbacks = list()
 cloud = models.ParticleCloud(phconfig.cloud_api_token)

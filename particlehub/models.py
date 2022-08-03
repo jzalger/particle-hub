@@ -55,7 +55,6 @@ class HubManager:
         self.stream_manager.start_stream()
 
     def update_device_list(self):
-        # TODO: Check to see if this is still a problem
         # This needs to be more sophistocated to not overwrite existing device objects that may be modified.
         # Need to add devices that dont exist, and update meta data for existing objects
         try:
@@ -93,8 +92,22 @@ class HubManager:
 
     def add_tag(self, device_id, tag):
         device = self.devices[device_id]
-        device.tags[tag] = device.get_variable_data(tag)
-        self.save_state()
+        try:
+            if device.online:
+                device.tags[tag] = device.get_variable_data(tag)
+                self.save_state()
+                return True
+        except (KeyError, AttributeError):
+            return False
+
+    def remove_tag(self, device_id, tag):
+        try:
+            device = self.devices[device_id]
+            device.tags.pop(tag)
+            self.save_state()
+            return True
+        except (KeyError, AttributeError):
+            return False
 
     def save_state(self):
         """
@@ -203,14 +216,9 @@ class StreamManager(object):
         """
         data (dict)        full event data dict
         device (Device)    device object
-        
-        Event Syntax:
-        event: motion-detected
-        data: {"data":"PUBLISHED DATA FIELD","ttl":"60","published_at":"2014-05-28T19:20:34.638Z","deviceid":"0123456789abcdef"}
-        
+
         ParticleHub Schema: "key1=val1,key2=val2"
         """
-        # TODO: Wrap this in a try statement to handle messages other than key value pairs
         device_data_pairs = data['data'].split(",")
         device_data_pairs = [pair.split("=") for pair in device_data_pairs]
         device_data = {pair[0]: pair[1] for pair in device_data_pairs}
