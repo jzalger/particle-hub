@@ -27,5 +27,5 @@ jobs:
       with:
         context: .
         push: true
-        tags: particlehub:latest
+        tags: jzalger/particlehub:latest
         
