@@ -106,15 +106,12 @@ def _remove_device(device_id):
 def add_tag():
     device_id = request.form['id']
     tag = request.form['tag']
-    device = hub_manager.devices[device_id]
-    device.tags[tag] = device.get_variable_data(tag)
-    # hub_manager.save_state()
+    hub_manager.add_tag(device_id, tag)
     return make_response(jsonify(dict(status="success", tag=tag)), 200)
+
 
 # TODO: need remove tag endpoint
 
-
-# FIXME: Since the callback is triggered from another thread, it cannot call back directly to flask
 event_callbacks = list()
 cloud = models.ParticleCloud(phconfig.cloud_api_token)
 hub_manager = models.HubManager(cloud, phconfig.stream_config, event_callbacks, db_log_dest, db_log_credentials)

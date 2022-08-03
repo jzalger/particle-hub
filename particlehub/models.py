@@ -1,4 +1,5 @@
 import pickle
+import os
 import logging
 import requests
 import sseclient
@@ -48,12 +49,14 @@ class HubManager:
         if managed_devices is None:
             self.managed_devices = dict()
         self.update_device_list()
+        self.load_state()
         self.stream_manager = StreamManager(stream_config, event_callbacks, log_dest, log_credentials,
                                             managed_devices=self.managed_devices)
         self.stream_manager.start_stream()
 
     def update_device_list(self):
-        # TODO: This needs to be more sophistocated to not overwrite existing device objects that may be modified.
+        # TODO: Check to see if this is still a problem
+        # This needs to be more sophistocated to not overwrite existing device objects that may be modified.
         # Need to add devices that dont exist, and update meta data for existing objects
         try:
             new_devices = self.cloud.get_devices()
@@ -79,20 +82,71 @@ class HubManager:
         device.is_managed = True
         self.managed_devices[device_id] = device
         self.stream_manager.managed_devices = self.managed_devices
+        self.save_state()
 
     def remove_device(self, device_id):
         device = self.devices[device_id]
         device.is_managed = False
         del self.managed_devices[device_id]
         self.stream_manager.managed_devices = self.managed_devices
+        self.save_state()
 
-    def save_managed_device_state(self, state_filename='state.pkl'):
+    def add_tag(self, device_id, tag):
+        device = self.devices[device_id]
+        device.tags[tag] = device.get_variable_data(tag)
+        self.save_state()
+
+    def save_state(self):
+        """
+        Gathers data requiring persistence and passes to internal state_save method
+
+        :return: (None)
+        """
+        if self.devices is not None:
+            state_data = dict(managed_device_ids=list(self.managed_devices.keys()),
+                              tags={device_id: device.tags for device_id, device in self.devices.items()})
+            self._save_state(state_data)
+
+    @staticmethod
+    def _save_state(data):
+        """
+        Executes the specific persistence method with aggregated data
+
+        :param data: (dict)
+
+        :return: (None)
+        """
+        state_filename = os.environ['PHSTATE_FILE']
         with open(state_filename, 'wb') as state_file:
-            pickle.dump(self.managed_devices, state_file)
+            pickle.dump(data, state_file)
 
-    def load_managed_device_state(self, state_filename='state.pkl'):
-        with open(state_filename, 'rb') as state_file:
-            self.managed_devices = pickle.load(state_file)
+    def load_state(self):
+        """
+        Retrieves state data from persistence method and populates the instance.
+
+        :return: (None)
+        """
+        state_data = self._load_state()
+        if state_data is not None:
+            self.managed_devices = {device_id: device for device_id, device in self.devices.items() if device_id in state_data['managed_device_ids']}
+            for device_id, device in self.managed_devices.items():
+                device.is_managed = True
+            for device_id, tags in state_data['tags'].items():
+                self.devices[device_id].tags = tags
+
+    @staticmethod
+    def _load_state():
+        """
+        Executes the specific persistence retrieval method.
+
+        :return: (dict)
+        """
+        state_filename = os.environ['PHSTATE_FILE']
+        if os.path.exists(state_filename):
+            with open(state_filename, 'rb') as state_file:
+                return pickle.load(state_file)
+        else:
+            return None
 
 
 class StreamManager(object):
