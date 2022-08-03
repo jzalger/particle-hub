@@ -4,18 +4,6 @@ $(document).ready(function($){
             { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
         });
     update_device_table();
-
-    $("#add-unmanaged-devices").on("click", function(){
-        $.post("/add-unmanaged-devices", function(data, status){
-            update_device_table();
-        });
-    });
-    
-    // Initialize log console
-    $.get("/update-console", function(data, status){
-            // Format on server side and display
-            $("#log-console").html(data);
-        })
 });
 function update_device_table() {
   $.get("/get-devices", function(data, status){
