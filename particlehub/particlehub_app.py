@@ -39,7 +39,7 @@ signal.signal(signal.SIGTERM, stop_signal_handler)
 
 @app.route('/', methods=['GET'])
 def root():
-    # refresh_all_devices()
+    refresh_all_devices()
     return render_template('particlehub.html')
 
 
