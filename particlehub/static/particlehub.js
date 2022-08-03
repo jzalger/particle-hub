@@ -38,10 +38,25 @@ function attach_tagging_callbacks(){
     $(".tag-row").click(function (){
         let device_id = $(this).attr('data-id');
         let tag = $(this).attr('data-tag');
-        $.post("/add-tag", {"id": device_id, "tag": tag}, function(data, status){
-            let row = $("button[data-tag='" + data.tag +"']");
-            // FIXME: fa-tag link broken with font awesome upgrade
-            $(row).append('<i class="fa fa-tag text-info"></i>');
-        });
+        let row = $("button[data-tag='" + tag +"']");
+        if ($(row).attr('data-tagged') == "false") {
+            $.post("/add-tag", {"id": device_id, "tag": tag}, function(data, status){
+                if (data.status == "success") {
+                    $(row).attr('data-tagged','true');
+                    $(row).append('<em class="fa fa-tag text-secondary"></em>');
+                } else {
+                    $(row).append('<em class="fa fa-circle-exclamation text-danger"></em>');
+                }
+            });
+        } else {
+            $.post("/remove-tag", {"id": device_id, "tag": tag}, function(data, status){
+                if (data.status == "success") {
+                    $(row).attr('data-tagged', 'false');
+                    $(row).find('em').remove();
+                } else {
+                    $(row).append('<em class="fa fa-circle-exclamation text-danger"></em>');
+                }
+            });
+        }
     });
 }

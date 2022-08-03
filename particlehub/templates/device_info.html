@@ -34,10 +34,13 @@
                             <small>Select a variable to denote a tag</small>
                         </button>
                         {% for variable in device_info.variables %}
-                        <button type="button" data-tag="{{ variable }}" data-id="{{ device_info.id }}"
-                                class="list-group-item list-group-item-action tag-row">{{ variable }}
                             {% if variable in device_info.tags %}
-                                <em class="fa fa-regular fa-tag text-info"></em>
+                                <button type="button" data-tagged="true" data-tag="{{ variable }}" data-id="{{ device_info.id }}"
+                                    class="list-group-item list-group-item-action tag-row">{{ variable }}
+                                    <em class="fa fa-tag text-secondary"></em>
+                            {% else %}
+                                    <button type="button" data-tagged="false" data-tag="{{ variable }}" data-id="{{ device_info.id }}"
+                                    class="list-group-item list-group-item-action tag-row">{{ variable }}
                             {% endif %}
                         </button>
                         {% endfor %}

@@ -6,10 +6,14 @@ services:
       - "5000:5000"
     environment:
       PHCONFIG_FILE: /run/secrets/phconfig.py
+      PHSTATE_FILE: /run/state/phstate.pkl
     restart: always
+    volumes:
+      - state:/run/state
     secrets:
       - phconfig.py
-
+volumes:
+  state:
 secrets:
   phconfig.py:
     file: phconfig.py

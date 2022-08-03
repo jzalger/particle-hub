@@ -4,18 +4,16 @@
 
 A data logging hub for the Particle IoT platform.
 
-## Docker-compose reference
-`docker-compose up` from project root directory.
+## Run using Docker container
+```
+git clone https://github.com/jzalger/particle-hub.git
+cd particle-hub
 
-## Docker Command reference
-Build the image
-`docker build -t particlehub:latest .`
+# Edit phconfig template with Particle.IO and log database credentials
+nano phconfig_template.py
+mv phconfig_template.py phconfig.py
 
-Run the image:
-`docker run -p80:5000 particlehub:latest`
+docker-compose up
 
-Stopping all images
-`docker ps -a -q | xargs docker rm`
-
-Removing all images:
-`docker images -a -q | xargs docker rmi -f`
+# Service will run on port 5000 of the docker container
+```
