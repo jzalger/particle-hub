@@ -60,9 +60,10 @@ class HubManager:
         try:
             new_devices = self.cloud.get_devices()
             if self.devices is not None:
-                for device in self.devices:
-                    if device in new_devices:
-                        new_devices[device].tags = self.devices[device].tags
+                for device_id in self.devices:
+                    if device_id in new_devices:
+                        new_devices[device_id].tags = self.devices[device_id].tags
+                        new_devices[device_id].is_managed = self.devices[device_id].is_managed
             self.devices = new_devices
         except CloudCommunicationError:
             self.devices = None
