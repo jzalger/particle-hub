@@ -6,14 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+          crossorigin="anonymous">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300&family=Raleway&display=swap"
-          integrity="sha384-O1K/V4LAHvu4TDdDBMeQedXSxBYVIIK+Cgmmk4y622T6xthoO5EA3XWio/7YVX40"
           crossorigin="anonymous">
-    <script src="https://kit.fontawesome.com/04d344c588.js"
-            integrity="sha384-YqGZonTAhB3+9eTubSiIQLI2uOnEotmWq3dil93CbQ3Md1bSCZhqPXU1oLdb52Gt"
-            crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/04d344c588.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='particlehub.css') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -45,7 +42,7 @@
 <div class="container">
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
         <a class="navbar-brand" href="#">
-            <i class="fas fa-wifi"></i>
+            <em class="fa fa-solid fa-wifi"></em>
             Particle Hub</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
                 aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +51,7 @@
 
         <div class="collapse navbar-collapse" id="navbar">
             <button disabled class="btn btn-secondary ml-auto" id="settings-modal-btn" data-toggle="modal"
-                    data-target="#settings-modal" type="button"><i class="fas fa-cog"></i></button>
+                    data-target="#settings-modal" type="button"><em class="fa fa-solid fa-gear"></em></button>
         </div>
     </nav>
 
@@ -63,11 +60,6 @@
             <div class="card bg-light">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     Devices
-                    <span>
-                        <button class="btn btn-outline-info btn-sm" id="add-unmanaged-devices" type="button">Add Unmanaged</button>
-                        <button class="btn btn-success btn-sm" id="start-logging-all" type="button">Start Logging All</button>
-                        <button class="btn btn-danger btn-sm" id="stop-logging-all" type="button">Stop Logging All</button>
-                    </span>
                 </div>
                 <table class="table table-hover" aria-label="Table containing active devices in the account.">
                     <thead>
@@ -77,7 +69,6 @@
                         <th scope="col">ID</th>
                         <th scope="col">Logging</th>
                         <th scope="col">Add/Remove</th>
-                        <th scope="col">Log Control</th>
                     </tr>
                     </thead>
                     <tbody id="device-list">

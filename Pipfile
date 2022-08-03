@@ -12,6 +12,7 @@ pyyaml = "*"
 gunicorn = "*"
 simplejson = "*"
 influxdb = "*"
+sseclient = "*"
 
 [dev-packages]
 pytest = "*"
