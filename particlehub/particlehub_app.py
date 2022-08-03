@@ -4,7 +4,7 @@ import signal
 import logging.handlers
 import importlib.util
 from flask_wtf import CSRFProtect
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, jsonify, request, make_response
 from particlehub import models
 
 spec = importlib.util.spec_from_file_location("phconfig", os.getenv("PHCONFIG_FILE"))
@@ -102,38 +102,17 @@ def _remove_device(device_id):
     phlog.info("Device and log manager removed (id: %s)" % device_id)
 
 
-@app.route('/update-console', methods=['GET'])
-def update_console(n_events=10):
-    query_func = models.log_query_functions[db_log_dest]
-    points = query_func(db_log_credentials, n_items=n_events)
-    html_head = """
-    <table class="table table-hover" aria-label="Log console table">
-        <thead>
-            <tr>
-                <th scope="col">Timestamp</th>
-                <th scope="col">Data</th>
-            </tr>
-        </thead>
-        <tbody>
-    """
-    html_table = ""
-    for point in points:
-        row = "<tr><td>%s</td><td>" % point["time"]
-        for k, v in point.iteritems():
-            if k != "time":
-                row += "%s: %s" % k, v
-        row += "</td></tr>"
-        html_table += row
-    html_end = """    
-        </tbody>
-    </table>
-    """
-    table = html_head + html_table + html_end
-    return make_response(table, 200)
-    
-    
-def stream_event_handler(event):
-    update_console()
+@app.route('/add-tag', methods=['POST'])
+def add_tag():
+    device_id = request.form['id']
+    tag = request.form['tag']
+    device = hub_manager.devices[device_id]
+    device.tags[tag] = device.get_variable_data(tag)
+    # hub_manager.save_state()
+    return make_response(jsonify(dict(status="success", tag=tag)), 200)
+
+# TODO: need remove tag endpoint
+
 
 # FIXME: Since the callback is triggered from another thread, it cannot call back directly to flask
 event_callbacks = list()

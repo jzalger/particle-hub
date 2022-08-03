@@ -201,24 +201,8 @@ def _log_to_influx(data, log_credentials=None, tags=None):
             phlog.debug(e)
 
 
-def _query_influx(log_credentials, tags=None, n_items=10):
-    try:
-        if tags is None:
-            tags = dict()
-        client = InfluxDBClient(**log_credentials)
-        results = client.query('SELECT * FROM %s limit %d' % (log_credentials['database'], n_items))
-        points = results.get_points(tags=tags)
-        return list(points)  # TODO: Check me: this is probably a list of dicts
-    except InfluxDBClientError as e:
-        phlog.error("InfluxDBClientError")
-        phlog.debug(e)
-    except InfluxDBServerError as e:
-        phlog.error("InfluxDBServerError")
-        phlog.debug(e)
-
-
 log_functions = dict(influx=_log_to_influx)
-log_query_functions = dict(influx=_query_influx)
+log_query_functions = dict(influx=None)
 
 
 ###################################################################################################
