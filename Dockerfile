@@ -1,4 +1,4 @@
-FROM python:3.9-alpine
+FROM python:3.10-alpine
 RUN pip install pipenv
 RUN mkdir -p /run/particlehub/
 COPY particlehub /run/particlehub/
